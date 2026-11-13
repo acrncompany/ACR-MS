@@ -1,0 +1,85 @@
+:host {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.list {
+  flex: 1 1 0;
+  min-height: 8rem;
+}
+
+.pager {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-top: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+
+  &__size {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  select {
+    height: 2rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 8px;
+    background: var(--mat-sys-surface-container-lowest);
+    color: var(--mat-sys-on-surface);
+    font: inherit;
+  }
+
+  &__buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.4rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--mat-sys-on-surface);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover:not(:disabled):not(.active) {
+      background: var(--mat-sys-surface-container-high);
+    }
+
+    &.active {
+      background: var(--mat-sys-primary);
+      color: var(--mat-sys-on-primary);
+      font-weight: 600;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    mat-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  &__gap {
+    padding: 0 0.25rem;
+  }
+}

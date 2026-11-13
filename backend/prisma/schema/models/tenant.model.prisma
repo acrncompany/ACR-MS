@@ -1,0 +1,124 @@
+/// Root of the multi-tenant hierarchy (no tenantId). RLS limits acrms_app to the current
+/// tenant's own row; resolving a tenant by subdomain before login goes through the
+/// SECURITY DEFINER function resolve_tenant_by_slug(slug).
+model Tenant {
+  id        String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name      String
+  /// Subdomain / lookup key, e.g. "acr" for acr.example.com. Lowercase (CHECK constraint).
+  slug      String       @unique
+  status    TenantStatus @default(ACTIVE)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  createdBy String?      @db.Uuid
+  updatedAt DateTime     @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime?    @db.Timestamptz(3)
+
+  settings         TenantSettings?
+  companies        Company[]
+  branches         Branch[]
+  departments      Department[]
+  positions        Position[]
+  users            User[]
+  userBranchAccess UserBranchAccess[]
+  roles            Role[]
+  rolePermissions  RolePermission[]
+  userRoles        UserRole[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+
+  @@map("tenants")
+}
+
+/// 1:1 with tenants.
+model TenantSettings {
+  id                 String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId           String    @unique @db.Uuid
+  /// null = no idle logout
+  idleTimeoutMinutes Int?
+  sessionMaxDays     Int       @default(30)
+  refreshTokenDays   Int       @default(7)
+  branding           Json      @default("{}")
+  /// BCP 47, e.g. en-IN
+  defaultLocale      String    @default("en")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy          String?   @db.Uuid
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt          DateTime? @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("tenant_settings")
+}
+
+/// Legal entity of a tenant, one per country / registration.
+model Company {
+  id                   String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId             String    @db.Uuid
+  name                 String
+  countryId            String    @db.Uuid
+  baseCurrencyCode     String    @db.Char(3)
+  /// e.g. { "PAN": "...", "GSTIN": "..." } or { "TRN": "..." }
+  taxIds               Json      @default("{}")
+  /// 1-12 (CHECK constraint)
+  fiscalYearStartMonth Int       @db.SmallInt
+  /// IANA zone
+  timezone             String
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy            String?   @db.Uuid
+  updatedAt            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt            DateTime? @db.Timestamptz(3)
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  country      Country  @relation(fields: [countryId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  baseCurrency Currency @relation(fields: [baseCurrencyCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  branches     Branch[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([countryId])
+  @@index([baseCurrencyCode])
+  @@map("companies")
+}
+
+model Branch {
+  id           String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId     String       @db.Uuid
+  companyId    String       @db.Uuid
+  code         String
+  name         String
+  addressLine1 String?
+  addressLine2 String?
+  postalCode   String?
+  countryId    String       @db.Uuid
+  regionId     String?      @db.Uuid
+  districtId   String?      @db.Uuid
+  cityId       String?      @db.Uuid
+  /// IANA zone
+  timezone     String
+  status       BranchStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+  createdBy    String?      @db.Uuid
+  updatedAt    DateTime     @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt    DateTime?    @db.Timestamptz(3)
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  company  Company   @relation(fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  country  Country   @relation(fields: [countryId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  region   Region?   @relation(fields: [regionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  district District? @relation(fields: [districtId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  city     City?     @relation(fields: [cityId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  homeUsers  User[]
+  userAccess UserBranchAccess[]
+  auditLogs  AuditLog[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([tenantId, companyId])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([districtId])
+  @@index([cityId])
+  @@map("branches")
+}

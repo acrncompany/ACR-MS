@@ -1,0 +1,33 @@
+<app-page-header [title]="title()">
+  <ng-content select="[actions]" />
+</app-page-header>
+
+@if (summary().length) {
+  <section class="summary">
+    @for (item of summary(); track item.label; let first = $first) {
+      <app-kpi-card
+        [featured]="first"
+        [label]="item.label"
+        [value]="item.value"
+        [icon]="item.icon ?? 'insights'"
+        [tone]="item.tone ?? 'green'"
+        [hint]="item.hint ?? ''"
+      />
+    }
+  </section>
+}
+
+<div class="toolbar">
+  <app-filter-search [(value)]="search" />
+  <span class="count">{{ matching() }} of {{ rows().length }} records</span>
+</div>
+
+<app-paged-grid
+  [rows]="rows()"
+  [columns]="columns()"
+  [quickFilter]="search()"
+  (matchingChange)="matching.set($event)"
+  (rowClick)="rowClick.emit($event)"
+/>
+
+<ng-content />

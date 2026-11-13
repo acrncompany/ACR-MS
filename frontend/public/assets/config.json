@@ -1,0 +1,20 @@
+{
+  "mockMode": true,
+  "branding": {
+    "productName": "ACR-MS",
+    "tagline": "Practice management for Chartered Accountants",
+    "logoUrl": "assets/logo.svg",
+    "highlights": [
+      "Clients, engagements and compliance deadlines in one place",
+      "Role-based workspaces that follow your reporting hierarchy",
+      "Billing, receipts and outstanding at a glance"
+    ]
+  },
+  "api": {
+    "baseUrl": "/api/v1"
+  },
+  "locale": {
+    "currency": "INR",
+    "locale": "en-IN"
+  }
+}

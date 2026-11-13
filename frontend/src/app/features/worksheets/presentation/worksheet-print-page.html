@@ -1,0 +1,253 @@
+@if (sheet(); as s) {
+  <div class="toolbar">
+    <a mat-stroked-button [routerLink]="['/worksheets', s.id]">
+      <mat-icon>arrow_back</mat-icon> Back to sheet
+    </a>
+    <button mat-flat-button type="button" (click)="print()">
+      <mat-icon>print</mat-icon> Print
+    </button>
+  </div>
+
+  <article class="paper">
+    <header class="title">
+      <span class="firm">{{ firm }}</span>
+      <h1>WORK / COMPLIANCE SHEET</h1>
+    </header>
+
+    <table class="box">
+      <tr>
+        <th>Work no</th>
+        <td>{{ s.workNo }}</td>
+        <th>Received date</th>
+        <td>{{ date(s.receivedDate) }}</td>
+        <th>Work assign date</th>
+        <td>{{ date(s.assignDate) }}</td>
+        <th>Target date</th>
+        <td>{{ date(s.targetDate) }}</td>
+      </tr>
+      <tr>
+        <th>Reference</th>
+        <td colspan="3">{{ s.reference }}</td>
+        <th>Mobile</th>
+        <td>{{ s.mobile }}</td>
+        <th>Others</th>
+        <td>{{ s.others }}</td>
+      </tr>
+      <tr>
+        <th>Assigned by</th>
+        <td>{{ name(s.assignedById) }}</td>
+        <th>Operations Manager</th>
+        <td>{{ name(s.assignedOpsId) }}</td>
+        <th>Assigned to TL</th>
+        <td>{{ name(s.assignedTlId) }}</td>
+        <th>Assigned to TM</th>
+        <td>{{ name(s.assignedTmId) }}</td>
+      </tr>
+    </table>
+
+    <h2>Client</h2>
+    <table class="box">
+      <tr>
+        <th>Name</th>
+        <td colspan="3">{{ ctx.clientName(s.clientId) }}</td>
+        <th>Constitution</th>
+        <td>{{ client()?.constitution }}</td>
+      </tr>
+      <tr>
+        <th>Address</th>
+        <td colspan="3">{{ client()?.address }}</td>
+        <th>PAN / GSTIN</th>
+        <td>{{ client()?.pan }} {{ client()?.gstin }}</td>
+      </tr>
+      <tr>
+        <th>Proprietor / partners / directors</th>
+        <td colspan="3">
+          @for (p of client()?.principals ?? []; track p.name) {
+            <div>{{ p.name }} ({{ p.designation }}) {{ p.mobile }}</div>
+          }
+        </td>
+        <th>Previous auditor</th>
+        <td>{{ client()?.previousAuditor }}</td>
+      </tr>
+      <tr>
+        <th>Contacts</th>
+        <td colspan="5">
+          @for (c of s.contacts; track $index) {
+            <div>{{ c.name }} · {{ c.phone }} · {{ c.email }}</div>
+          }
+        </td>
+      </tr>
+    </table>
+
+    <h2>Work</h2>
+    <table class="box">
+      <tr>
+        <th>Nature of work</th>
+        <td>{{ ctx.typeLabel(s.workTypeKey) }}</td>
+        <th>Period / year</th>
+        <td>{{ s.period }}</td>
+        <th>Score</th>
+        <td>{{ s.score }}</td>
+      </tr>
+      <tr>
+        <th>Specific requirements</th>
+        <td colspan="5">
+          @for (req of s.requirements; track $index; let i = $index) {
+            <div>{{ i + 1 }}. {{ req }}</div>
+          }
+        </td>
+      </tr>
+      <tr>
+        <th>Pending bills</th>
+        <td colspan="5">
+          @for (b of s.pendingBills; track $index) {
+            <div>{{ b.ref }} — {{ money(b.amount) }}</div>
+          }
+        </td>
+      </tr>
+    </table>
+
+    <h2>Documents</h2>
+    <table class="box">
+      <tr>
+        <th>Handed over</th>
+        <th>Received on</th>
+        <th>Returned</th>
+        <th>Returned on</th>
+      </tr>
+      @for (n of docRows(); track n) {
+        <tr>
+          <td>{{ s.documents[n]?.name }}</td>
+          <td>{{ date(s.documents[n]?.receivedOn) }}</td>
+          <td>{{ s.returned[n]?.name }}</td>
+          <td>{{ date(s.returned[n]?.returnedOn) }}</td>
+        </tr>
+      }
+    </table>
+
+    <h2>Filing details &amp; tax</h2>
+    <table class="box">
+      <tr>
+        <th>IT filed date</th>
+        <td>{{ date(s.filing.itFiledDate) }}</td>
+        <th>Ack no</th>
+        <td>{{ s.filing.ackNo }}</td>
+        <th>UDIN / date</th>
+        <td>{{ s.filing.udin }} {{ date(s.filing.udinDate) }}</td>
+      </tr>
+      <tr>
+        <th>ITR-V sent</th>
+        <td>{{ date(s.filing.itrVSentDate) }}</td>
+        <th>IT verified</th>
+        <td>{{ s.filing.itVerified }}</td>
+        <th>Mode / date</th>
+        <td>{{ s.filing.itVerifiedMode }} {{ date(s.filing.itVerifiedDate) }}</td>
+      </tr>
+      <tr>
+        <th>Tax {{ s.tax.kind }}</th>
+        <td>{{ money(s.tax.amount) }}</td>
+        <th>FY</th>
+        <td>{{ s.tax.fy }}</td>
+        <th>Payment</th>
+        <td>{{ date(s.tax.paymentDate) }} {{ s.tax.paymentMode }}</td>
+      </tr>
+      <tr>
+        <th>Receipt</th>
+        <td colspan="5">{{ date(s.tax.receiptDate) }} {{ s.tax.receiptMode }}</td>
+      </tr>
+    </table>
+
+    <h2>Completion</h2>
+    <table class="box">
+      <tr>
+        <th>Work finished by</th>
+        <td>{{ stamp(s.completion.finished.stamp) }}</td>
+        <td>{{ s.completion.finished.comments }}</td>
+      </tr>
+      <tr>
+        <th>Work finalized by</th>
+        <td>{{ stamp(s.completion.finalized.stamp) }}</td>
+        <td>{{ s.completion.finalized.comments }}</td>
+      </tr>
+      <tr>
+        <th>Documented by</th>
+        <td>{{ stamp(s.completion.documented.stamp) }}</td>
+        <td>{{ s.completion.documented.comments }}</td>
+      </tr>
+      <tr>
+        <th>Documentation checklist</th>
+        <td colspan="2">
+          @for (item of s.completion.checklist; track item.label) {
+            <div>{{ item.done ? '☑' : '☐' }} {{ item.label }}</div>
+          }
+        </td>
+      </tr>
+      <tr>
+        <th>Folder locations</th>
+        <td colspan="2">
+          @for (l of s.completion.folderLocations; track $index) {
+            <div>{{ l }}</div>
+          }
+        </td>
+      </tr>
+    </table>
+
+    <h2>Office approval</h2>
+    <table class="box">
+      <tr>
+        <th>Decision</th>
+        <td>{{ s.officeApproval.decision }}</td>
+        <th>Approved by</th>
+        <td>{{ stamp(s.officeApproval.stamp) }}</td>
+      </tr>
+      <tr>
+        <th>Comments</th>
+        <td colspan="3">{{ s.officeApproval.comments }}</td>
+      </tr>
+    </table>
+
+    <h2>Delivery &amp; billing</h2>
+    <table class="box">
+      <tr>
+        <th>Delivery mode</th>
+        <td>{{ s.delivery.mode }}</td>
+        <th>Items</th>
+        <td>{{ s.delivery.items }}</td>
+        <th>Date</th>
+        <td>{{ date(s.delivery.date) }}</td>
+      </tr>
+      <tr>
+        <th>Receiver</th>
+        <td>{{ s.delivery.receiverName }}</td>
+        <th>Phone</th>
+        <td>{{ s.delivery.receiverPhone }}</td>
+        <th>Invoice no / amount</th>
+        <td>{{ s.delivery.invoiceNo }} {{ money(s.delivery.invoiceAmount) }}</td>
+      </tr>
+      <tr>
+        <th>Fee receipt</th>
+        <td>{{ money(s.delivery.receiptAmount) }}</td>
+        <th>Date</th>
+        <td>{{ date(s.delivery.receiptDate) }}</td>
+        <th>Mode</th>
+        <td>{{ s.delivery.receiptMode }}</td>
+      </tr>
+    </table>
+
+    <h2>Action log</h2>
+    <table class="box log">
+      @for (h of s.history; track h.id) {
+        <tr>
+          <td>{{ h.label }}</td>
+          <td>{{ h.userName }} ({{ h.role }})</td>
+          <td>{{ time(h.at) }}</td>
+          <td>{{ h.comment }}</td>
+        </tr>
+      }
+    </table>
+
+    <p class="note">Client portal credentials are held on the client record and are not printed.</p>
+  </article>
+} @else {
+  <p class="missing">This work sheet does not exist, or you are not allowed to see it.</p>
+}

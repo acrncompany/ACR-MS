@@ -1,0 +1,296 @@
+@use '@angular/material' as mat;
+
+// Material 3 system tokens (--mat-sys-*). Every component reads these variables, so a tenant
+// can re-brand by overriding them (see `branding.cssVariables` in assets/config.json).
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: (
+          Inter,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif,
+        ),
+        brand-family: (
+          Inter,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif,
+        ),
+      ),
+      density: 0,
+    )
+  );
+}
+
+// ThemeService toggles this class.
+html.theme-dark {
+  color-scheme: dark;
+}
+
+// Brand: forest green with a bright green accent on a warm light-grey page, white gradient cards.
+// Tokens are light-dark() pairs (light value, dark value) so the app follows the theme toggle.
+html {
+  --mat-sys-primary: light-dark(#0a5c36, #5fdc9c);
+  --mat-sys-on-primary: light-dark(#ffffff, #00391f);
+  --mat-sys-primary-container: light-dark(#d4f3e1, #0d4a2e);
+  --mat-sys-on-primary-container: light-dark(#04361f, #c6f2da);
+  --mat-sys-secondary: light-dark(#3d6b55, #9fd6b8);
+  --mat-sys-secondary-container: light-dark(#e1f1e8, #1f3f30);
+  --mat-sys-on-secondary-container: light-dark(#12392a, #d0eddc);
+  --mat-sys-tertiary: light-dark(#8a6d1f, #e3c46d);
+  --mat-sys-tertiary-container: light-dark(#f6ecd0, #4a3c12);
+  --mat-sys-on-tertiary-container: light-dark(#4a3908, #f6e6b4);
+
+  --mat-sys-surface: light-dark(#ffffff, #0c110e);
+  --mat-sys-background: light-dark(#ffffff, #0c110e);
+  --mat-sys-surface-container-lowest: light-dark(#ffffff, #141b17);
+  --mat-sys-surface-container-low: light-dark(#f7f6f6, #18211c);
+  --mat-sys-surface-container: light-dark(#efedee, #1b2420);
+  --mat-sys-surface-container-high: light-dark(#e6e3e4, #212b26);
+  --mat-sys-surface-container-highest: light-dark(#dcd9da, #27322d);
+  --mat-sys-on-surface: light-dark(#121a16, #e4ece7);
+  --mat-sys-on-surface-variant: light-dark(#59635e, #9db0a7);
+  --mat-sys-outline-variant: light-dark(#e3e0e1, #29352f);
+  --mat-sys-outline: light-dark(#8a9791, #6f8179);
+
+  // Brand colours, kept as plain vars so charts and gradients can read them.
+  --brand-deep: light-dark(#06482b, #0d5a37);
+  --brand-header: light-dark(#06472b, #1a2a22);
+  --accent: light-dark(#12b564, #3fd488);
+  --accent-lime: #4cdc12;
+  --chart-1: light-dark(#06482b, #3fd488);
+  --chart-2: light-dark(#12b564, #12b564);
+  --chart-3: light-dark(#8fdcb3, #1f7a50);
+  --chart-4: light-dark(#d3f1e0, #2a4a3a);
+  --chart-warn: light-dark(#c8a23a, #e3c46d);
+  --card-shadow: light-dark(0 1px 3px rgb(16 40 30 / 7%), none);
+
+  // Gradients: featured (dark green) and regular (white fading to a pale green tint).
+  --feature-gradient: linear-gradient(
+    135deg,
+    light-dark(#0b6a3e, #0f6a40) 0%,
+    light-dark(#04361f, #063a22) 100%
+  );
+  --card-gradient: linear-gradient(
+    160deg,
+    light-dark(#ffffff, #151c18) 0%,
+    light-dark(#eaf8f0, #132a1e) 100%
+  );
+
+  // Sidebar: white floating panel; the active item is a dark-green pill.
+  --sidebar-bg: light-dark(#dcf2e5, #141b17);
+  --sidebar-text: var(--mat-sys-on-surface-variant);
+  --sidebar-text-strong: var(--mat-sys-on-surface);
+  --sidebar-hover: light-dark(#c6e9d5, #1b3a2a);
+  --sidebar-active: var(--feature-gradient);
+  --sidebar-accent: light-dark(#12b564, #3fd488);
+
+  // Status / KPI tones.
+  --tone-info-bg: light-dark(#dbeaf8, #1d3550);
+  --tone-info-fg: light-dark(#154a7a, #b6d6f5);
+  --tone-warn-bg: light-dark(#fbeccb, #4a3c12);
+  --tone-warn-fg: light-dark(#6b4a05, #f6e0a3);
+  --tone-violet-bg: light-dark(#e7e1f6, #33294f);
+  --tone-violet-fg: light-dark(#4a3584, #d4c8f3);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// White, softly rounded cards everywhere.
+mat-card.mat-mdc-card {
+  --mat-card-outlined-container-color: transparent;
+  --mat-card-outlined-outline-color: var(--mat-sys-outline-variant);
+  --mat-card-outlined-container-shape: 20px;
+  --mat-card-outlined-outline-width: 1px;
+  background: var(--card-gradient);
+  box-shadow: var(--card-shadow);
+}
+
+// Status chips (grid cells, lists, <app-status-chip>).
+.status {
+  display: inline-block;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  line-height: 1.6rem;
+  white-space: nowrap;
+  text-transform: capitalize;
+
+  &--ok {
+    background: light-dark(#c9f5d9, #0d4a2e);
+    color: light-dark(#05512b, #b5f0d0);
+  }
+
+  &--info {
+    background: var(--tone-info-bg);
+    color: var(--tone-info-fg);
+  }
+
+  &--warn {
+    background: var(--tone-warn-bg);
+    color: var(--tone-warn-fg);
+  }
+
+  &--neutral {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &--bad {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+// AG Grid follows the Material tokens; the header row is dark green like the brand.
+.app-grid {
+  width: 100%;
+  --ag-background-color: var(--mat-sys-surface-container-lowest);
+  --ag-foreground-color: var(--mat-sys-on-surface);
+  --ag-header-background-color: var(--brand-header);
+  --ag-header-text-color: #ffffff;
+  --ag-selected-row-background-color: var(--mat-sys-primary-container);
+  --ag-border-color: var(--mat-sys-outline-variant);
+  --ag-accent-color: var(--mat-sys-primary);
+  --ag-odd-row-background-color: var(--mat-sys-surface-container-lowest);
+  --ag-row-hover-color: var(--mat-sys-surface-container-low);
+  --ag-header-column-resize-handle-color: rgb(255 255 255 / 25%);
+}
+
+// Compact filter bars: small pills with a chevron (<app-filter-select>, <app-filter-search>).
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2rem;
+  padding: 0 0.55rem 0 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  cursor: pointer;
+  transition:
+    border-color 120ms,
+    background 120ms;
+
+  &:hover {
+    border-color: var(--mat-sys-outline);
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &:focus-visible,
+  &:focus-within {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+
+  .mat-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+
+  &--active,
+  &[aria-pressed='true'] {
+    border-color: var(--mat-sys-primary);
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+
+  &--search {
+    width: min(16rem, 100%);
+    padding: 0 0.6rem;
+    cursor: text;
+
+    input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--mat-sys-on-surface);
+      font: inherit;
+    }
+  }
+}
+
+// Rows whose target date has passed (work sheets).
+.app-grid .row-overdue {
+  background: color-mix(in srgb, var(--mat-sys-error-container) 55%, transparent);
+}
+
+// Approve / Reject buttons rendered inside grid cells.
+.grid-actions {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.grid-btn {
+  height: 1.9rem;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  cursor: pointer;
+
+  &--ok {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+
+  &--bad {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+
+  &--plain {
+    background: var(--mat-sys-surface-container-high);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &:hover {
+    filter: brightness(0.95);
+  }
+}
+
+// Material 3 buttons and fields get a softer, rounder look.
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button {
+  --mat-button-filled-container-shape: 12px;
+  --mat-button-outlined-container-shape: 12px;
+}

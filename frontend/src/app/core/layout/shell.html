@@ -1,0 +1,109 @@
+<mat-sidenav-container class="shell" autosize>
+  <mat-sidenav
+    class="sidebar"
+    [class.sidebar--rail]="rail()"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile() || drawerOpen()"
+    (closedStart)="drawerOpen.set(false)"
+    [fixedInViewport]="true"
+    role="navigation"
+    aria-label="Main navigation"
+  >
+    <div class="sidebar__panel">
+      <div class="sidebar__brand">
+        <img [src]="branding.logoUrl" [alt]="branding.productName" />
+        @if (!rail()) {
+          <span>{{ branding.productName }}</span>
+        }
+      </div>
+
+      <nav class="nav">
+        @for (group of navGroups(); track group.section) {
+          @if (!rail()) {
+            <div class="nav__heading">{{ group.section }}</div>
+          } @else {
+            <div class="nav__divider"></div>
+          }
+          @for (item of group.items; track item.route) {
+            <a
+              class="nav__link"
+              [routerLink]="item.route"
+              routerLinkActive="nav__link--active"
+              [matTooltip]="rail() ? item.label : ''"
+              matTooltipPosition="right"
+              (click)="drawerOpen.set(false)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              @if (!rail()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          }
+        }
+      </nav>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <header class="topbar">
+      <button mat-icon-button type="button" aria-label="Toggle sidebar" (click)="toggleSidebar()">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <span class="spacer"></span>
+
+      @if (mockMode) {
+        <span class="mock-chip" title="No backend: all data is sample data">Mock data</span>
+      }
+
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Toggle light/dark theme"
+        (click)="theme.toggle()"
+      >
+        <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <button type="button" class="user" [matMenuTriggerFor]="userMenu" aria-label="User menu">
+        <span class="user__avatar">{{ initial() }}</span>
+        @if (!isMobile()) {
+          <span class="user__text">
+            <strong>{{ user()?.name }}</strong>
+            <small>{{ user()?.role }} · {{ user()?.department }}</small>
+          </span>
+          <mat-icon class="user__caret">expand_more</mat-icon>
+        }
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="user-menu__header">
+          <strong>{{ user()?.name }}</strong>
+          <small>{{ user()?.role }}</small>
+          <small>{{ user()?.department }} · {{ user()?.email }}</small>
+        </div>
+        <mat-divider />
+        <button mat-menu-item type="button" (click)="signOut()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </header>
+
+    <main class="content">
+      @if (showWelcome() && user(); as current) {
+        <section class="welcome" aria-label="Welcome">
+          <div>
+            <h2>{{ greeting() }}, {{ current.name }}!</h2>
+            <p>Welcome to {{ branding.productName }}. Here is your workspace for today.</p>
+          </div>
+          <div class="welcome__meta">
+            <span class="welcome__chip">{{ current.role }}</span>
+            <span class="welcome__chip">{{ current.department }}</span>
+            <span class="welcome__date">{{ today }}</span>
+          </div>
+        </section>
+      }
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

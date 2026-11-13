@@ -1,0 +1,18 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../../src/generated/prisma"
+  moduleFormat    = "esm"
+  // Partial unique indexes (`where: raw(...)`) for soft-deleted tables.
+  previewFeatures = ["partialIndexes"]
+}
+
+// Conventions (see CLAUDE.md):
+// - Every tenant-owned table has tenantId, a UNIQUE(tenantId, id) target and composite
+//   foreign keys (tenantId, xId) -> x(tenantId, id), so a row can never point at another
+//   tenant's row. Composite relations always use onDelete/onUpdate Restrict.
+// - Uniques on soft-deleted tables are partial: WHERE "deletedAt" IS NULL.
+// - Row-level security, the acrms_app role, grants, CHECK constraints, the tenant lookup
+//   function and the audit_logs immutability trigger live in raw SQL in the init migration.
+datasource db {
+  provider = "postgresql"
+}

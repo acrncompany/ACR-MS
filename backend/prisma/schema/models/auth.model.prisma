@@ -1,0 +1,59 @@
+/// Refresh-token session. Only the token HASH is stored. Rotation: the old session gets
+/// revokedAt + replacedById; presenting a replaced token again revokes the whole chain.
+/// No deletedAt: a session ends with revokedAt.
+model Session {
+  id                String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId          String    @db.Uuid
+  userId            String    @db.Uuid
+  refreshTokenHash  String    @unique
+  userAgent         String?
+  ip                String?   @db.Inet
+  createdAt         DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  lastUsedAt        DateTime  @default(now()) @db.Timestamptz(3)
+  /// Sliding expiry (refresh token lifetime).
+  expiresAt         DateTime  @db.Timestamptz(3)
+  /// Hard cap (tenant_settings.sessionMaxDays); never extended.
+  absoluteExpiresAt DateTime  @db.Timestamptz(3)
+  revokedAt         DateTime? @db.Timestamptz(3)
+  revokedReason     String?
+  replacedById      String?   @db.Uuid
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user       User      @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  replacedBy Session?  @relation("SessionRotation", fields: [tenantId, replacedById], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  replaces   Session[] @relation("SessionRotation")
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, userId])
+  @@index([tenantId, replacedById])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// Append-only: UPDATE/DELETE/TRUNCATE are blocked by trigger, and acrms_app has INSERT and
+/// SELECT only. No updatedAt/createdBy/deletedAt. Needs monthly partitioning later.
+model AuditLog {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String   @db.Uuid
+  branchId  String?  @db.Uuid
+  /// Actor; null for system actions.
+  userId    String?  @db.Uuid
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  ip        String?  @db.Inet
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  branch Branch? @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  user   User?   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, userId])
+  @@index([tenantId, branchId])
+  @@map("audit_logs")
+}

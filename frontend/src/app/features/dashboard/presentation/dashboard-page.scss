@@ -1,0 +1,47 @@
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.row {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  &--wide-narrow {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  &--even {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.panel {
+  min-width: 0;
+  padding: 1.25rem;
+
+  &--spaced {
+    margin-top: 0;
+  }
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+  font-weight: 600;
+}
+
+@media (max-width: 1000px) {
+  .row--wide-narrow,
+  .row--even {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.section-title {
+  margin: 0.5rem 0 0.75rem;
+  font: var(--mat-sys-title-large);
+}

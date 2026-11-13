@@ -1,0 +1,121 @@
+<app-page-header
+  title="Organization"
+>
+  @if (canCreate) {
+    <button mat-flat-button type="button" (click)="addPosition(null)">
+      <mat-icon>add</mat-icon>
+      Add position
+    </button>
+  }
+  <app-reset-demo-button />
+</app-page-header>
+
+<div class="layout">
+  <mat-card appearance="outlined" class="tree-card">
+    <div class="chart-scroll">
+      <ul class="chart" role="tree">
+        @for (node of roots(); track node.position.id) {
+          <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: node }" />
+        }
+      </ul>
+    </div>
+
+    <ng-template #nodeTpl let-node>
+      <li role="treeitem" [attr.aria-selected]="false">
+        <div class="node">
+          <div class="node__head">
+            <strong>{{ node.position.title }}</strong>
+            @if (canCreate || canEdit) {
+              <button
+                mat-icon-button
+                type="button"
+                [matMenuTriggerFor]="menu"
+                aria-label="Position actions"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                @if (canCreate) {
+                  <button mat-menu-item type="button" (click)="addPosition(node.position.id)">
+                    <mat-icon>subdirectory_arrow_right</mat-icon>
+                    <span>Add report</span>
+                  </button>
+                }
+                @if (canEdit) {
+                  <button
+                    mat-menu-item
+                    type="button"
+                    (click)="editPosition(node.position, 'Edit position')"
+                  >
+                    <mat-icon>edit</mat-icon>
+                    <span>Edit / rename</span>
+                  </button>
+                  <button
+                    mat-menu-item
+                    type="button"
+                    (click)="editPosition(node.position, 'Move position')"
+                  >
+                    <mat-icon>drive_file_move</mat-icon>
+                    <span>Move</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="removePosition(node.position)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Remove</span>
+                  </button>
+                }
+              </mat-menu>
+            }
+          </div>
+          <span class="tags">
+            <span class="tag tag--dept">{{ node.department }}</span>
+          </span>
+        </div>
+        @if (node.children.length) {
+          <ul role="group">
+            @for (child of node.children; track child.position.id) {
+              <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child }" />
+            }
+          </ul>
+        }
+      </li>
+    </ng-template>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="dept-card">
+    <h2>
+      Departments
+      @if (canCreate) {
+        <button mat-icon-button type="button" aria-label="Add department" (click)="addDepartment()">
+          <mat-icon>add</mat-icon>
+        </button>
+      }
+    </h2>
+    <ul class="depts">
+      @for (department of departments(); track department.id) {
+        <li>
+          <span>{{ department.name }}</span>
+          @if (canEdit) {
+            <span class="depts__actions">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Rename department"
+                (click)="renameDepartment(department.id, department.name)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Remove department"
+                (click)="removeDepartment(department.id, department.name)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </span>
+          }
+        </li>
+      }
+    </ul>
+  </mat-card>
+</div>

@@ -1,0 +1,59 @@
+<ag-grid-angular
+  class="app-grid list"
+  [theme]="theme"
+  [rowData]="rows()"
+  [columnDefs]="visibleColumns()"
+  [defaultColDef]="defaultColDef"
+  [quickFilterText]="quickFilter()"
+  [getRowId]="getRowId()"
+  [getRowClass]="getRowClass()"
+  [pagination]="true"
+  [suppressPaginationPanel]="true"
+  [paginationPageSize]="pageSize()"
+  (gridReady)="onReady($event)"
+  (paginationChanged)="sync()"
+  (rowClicked)="rowClick.emit($event.data)"
+/>
+
+<nav class="pager" aria-label="Pagination">
+  <label class="pager__size">
+    Rows
+    <select (change)="setSize($any($event.target).value)">
+      @for (option of sizes; track option) {
+        <option [value]="option" [selected]="option === size()">
+          {{ option === ALL ? 'All' : option }}
+        </option>
+      }
+    </select>
+  </label>
+
+  <span class="pager__range">{{ from() }}–{{ to() }} of {{ matching() }}</span>
+
+  <div class="pager__buttons">
+    <button type="button" aria-label="Previous page" [disabled]="page() === 0" (click)="goTo(page() - 1)">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    @for (n of pages(); track $index) {
+      @if (n === null) {
+        <span class="pager__gap">…</span>
+      } @else {
+        <button
+          type="button"
+          [class.active]="n === page()"
+          [attr.aria-current]="n === page() ? 'page' : null"
+          (click)="goTo(n)"
+        >
+          {{ n + 1 }}
+        </button>
+      }
+    }
+    <button
+      type="button"
+      aria-label="Next page"
+      [disabled]="page() >= pageCount() - 1"
+      (click)="goTo(page() + 1)"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+</nav>

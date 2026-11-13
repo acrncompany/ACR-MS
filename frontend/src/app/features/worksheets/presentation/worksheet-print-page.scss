@@ -1,0 +1,118 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  padding: 1rem;
+  background: var(--mat-sys-surface);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 62rem;
+  margin: 0 auto 1rem;
+}
+
+// The sheet stays light even in dark mode, like the paper it replaces.
+.paper {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background: #ffffff;
+  color: #111111;
+  font:
+    0.8rem/1.35 Inter,
+    system-ui,
+    sans-serif;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 20%);
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 0.75rem;
+
+  .firm {
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  h1 {
+    margin: 0.2rem 0 0;
+    font-size: 1.2rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+h2 {
+  margin: 0.9rem 0 0.25rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.box {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #555555;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    width: 10%;
+    background: #f1f1f1;
+    font-weight: 600;
+  }
+
+  td {
+    min-height: 1.5rem;
+  }
+}
+
+.log td {
+  font-size: 0.72rem;
+}
+
+.note,
+.missing {
+  margin-top: 1rem;
+  color: #555555;
+  font-size: 0.72rem;
+}
+
+.missing {
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 40rem) {
+  .paper {
+    overflow-x: auto;
+  }
+}
+
+@media print {
+  :host {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .paper {
+    max-width: none;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  h2,
+  .box tr {
+    break-inside: avoid;
+  }
+}

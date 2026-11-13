@@ -1,0 +1,182 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.tree-card,
+.dept-card {
+  padding: 1.25rem;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+
+  small {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-medium);
+  }
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Top-down org chart. Connector lines are drawn with li::before/::after so the chart follows the
+// data: add, move or remove a position and the lines redraw themselves.
+.chart-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.chart {
+  --line: var(--mat-sys-outline);
+  --gap: 1.5rem;
+  display: flex;
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+
+  ul {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: var(--gap);
+  }
+
+  // Vertical line from a parent down to its row of children.
+  ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: var(--gap);
+    border-left: 2px solid var(--line);
+  }
+
+  li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--gap) 0.5rem 0;
+  }
+
+  // The horizontal bar over siblings, split into a left and right half per child.
+  li::before,
+  li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    width: 50%;
+    height: var(--gap);
+    border-top: 2px solid var(--line);
+  }
+
+  li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid var(--line);
+  }
+
+  li:only-child {
+    padding-top: 0;
+  }
+
+  li:only-child::before,
+  li:only-child::after {
+    display: none;
+  }
+
+  li:first-child::before,
+  li:last-child::after {
+    border: 0;
+  }
+
+  li:last-child::before {
+    border-right: 2px solid var(--line);
+    border-radius: 0 10px 0 0;
+  }
+
+  li:first-child::after {
+    border-radius: 10px 0 0 0;
+  }
+
+  // The first row (the Board) has no line above it.
+  > li {
+    padding-top: 0;
+  }
+
+  > li::before,
+  > li::after {
+    display: none;
+  }
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 13rem;
+  padding: 0.4rem 0.4rem 0.75rem 0.9rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-top: 3px solid var(--mat-sys-primary);
+  border-radius: 14px;
+  background: var(--mat-sys-surface-container-lowest);
+  box-shadow: var(--card-shadow);
+  text-align: center;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.25rem;
+    width: 100%;
+
+    strong {
+      flex: 1;
+      padding: 0.45rem 0 0 0.6rem;
+      font: var(--mat-sys-title-small);
+    }
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  padding-right: 0.5rem;
+}
+
+.tag {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-small);
+  white-space: nowrap;
+
+  &--dept {
+    background: var(--tone-info-bg);
+    color: var(--tone-info-fg);
+  }
+}
+
+.depts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.15rem 0 0.15rem 0.25rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}

@@ -1,0 +1,35 @@
+@if (data(); as overview) {
+  <section class="kpis" aria-label="Key figures">
+    @for (kpi of kpis(); track kpi.id; let first = $first) {
+      <app-kpi-card
+        [featured]="first"
+        [label]="kpi.label"
+        [value]="display(kpi)"
+        [icon]="kpi.icon"
+        [tone]="kpi.tone"
+        [hint]="kpi.hint"
+        [trend]="kpi.trend"
+      />
+    }
+  </section>
+
+  @if (showWorksheets) {
+    <h2 class="section-title">Work sheets</h2>
+    <app-worksheet-widgets />
+    <app-worksheet-inbox />
+  }
+
+  @if (can.departments) {
+    <mat-card appearance="outlined" class="panel panel--spaced">
+      <h2>Departments</h2>
+      <ag-grid-angular
+        class="app-grid"
+        [theme]="gridTheme"
+        [rowData]="overview.departments"
+        [columnDefs]="departmentColumns"
+        domLayout="autoHeight"
+        [defaultColDef]="{ sortable: true, resizable: true }"
+      />
+    </mat-card>
+  }
+}

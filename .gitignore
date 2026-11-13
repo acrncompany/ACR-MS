@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Environment files (keep the examples)
+.env
+.env.*
+!.env.example
+
+# Generated Prisma client
+backend/src/generated/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/

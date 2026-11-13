@@ -1,0 +1,138 @@
+:host {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.25rem 1rem;
+  overflow: hidden;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 20px;
+  background: var(--card-gradient);
+  box-shadow: var(--card-shadow);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  --kpi-bg: var(--mat-sys-surface-container-high);
+  --kpi-fg: var(--mat-sys-primary);
+  --kpi-hint-bg: var(--mat-sys-primary-container);
+  --kpi-hint-fg: var(--mat-sys-on-primary-container);
+  --kpi-label: var(--mat-sys-on-surface-variant);
+}
+
+:host(:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgb(16 40 30 / 10%);
+}
+
+// Dot pattern in the corner, like the reference cards.
+:host::after {
+  content: '';
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 5rem;
+  height: 3.5rem;
+  background-image: radial-gradient(currentColor 1.2px, transparent 1.4px);
+  background-size: 0.7rem 0.7rem;
+  color: var(--mat-sys-on-surface);
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+// The first card of each row is the dark-green featured card with light text.
+:host(.kpi--featured) {
+  border-color: transparent;
+  background: var(--feature-gradient);
+  color: #ffffff;
+  --kpi-bg: rgb(255 255 255 / 95%);
+  --kpi-fg: #06482b;
+  --kpi-hint-bg: rgb(255 255 255 / 16%);
+  --kpi-hint-fg: #ffffff;
+  --kpi-label: rgb(255 255 255 / 78%);
+}
+
+:host(.kpi--featured)::after {
+  color: #ffffff;
+  opacity: 0.16;
+}
+
+:host(.kpi--blue:not(.kpi--featured)) {
+  --kpi-fg: var(--tone-info-fg);
+}
+
+:host(.kpi--amber:not(.kpi--featured)) {
+  --kpi-fg: var(--tone-warn-fg);
+}
+
+:host(.kpi--red:not(.kpi--featured)) {
+  --kpi-fg: var(--mat-sys-error);
+}
+
+:host(.kpi--violet:not(.kpi--featured)) {
+  --kpi-fg: var(--tone-violet-fg);
+}
+
+// Tinted tone circles for the non-featured cards.
+:host(.kpi--blue:not(.kpi--featured)) {
+  --kpi-bg: var(--tone-info-bg);
+}
+
+:host(.kpi--amber:not(.kpi--featured)) {
+  --kpi-bg: var(--tone-warn-bg);
+}
+
+:host(.kpi--red:not(.kpi--featured)) {
+  --kpi-bg: var(--mat-sys-error-container);
+}
+
+:host(.kpi--violet:not(.kpi--featured)) {
+  --kpi-bg: var(--tone-violet-bg);
+}
+
+:host(.kpi--green:not(.kpi--featured)) {
+  --kpi-bg: var(--mat-sys-primary-container);
+}
+
+.kpi__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--kpi-bg);
+  color: var(--kpi-fg);
+}
+
+.kpi__label {
+  color: var(--kpi-label);
+  font: var(--mat-sys-label-large);
+}
+
+.kpi__value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.kpi__hint {
+  display: inline-block;
+  margin-top: 0.3rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: var(--kpi-hint-bg);
+  color: var(--kpi-hint-fg);
+  font: var(--mat-sys-label-small);
+  font-weight: 600;
+}
+
+.kpi__spark {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  color: var(--accent);
+}
+
+:host(.kpi--featured) .kpi__spark {
+  color: #6df0a8;
+}

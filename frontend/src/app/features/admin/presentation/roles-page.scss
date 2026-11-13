@@ -1,0 +1,110 @@
+.matrix-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.scroll {
+  overflow: auto;
+  max-height: calc(100dvh - 14rem);
+}
+
+.matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+
+  th,
+  td {
+    padding: 0.2rem 0.25rem;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  thead th {
+    position: sticky;
+    z-index: 2;
+    background: var(--brand-header);
+    color: #ffffff;
+    font: var(--mat-sys-label-large);
+  }
+
+  thead tr:first-child th {
+    top: 0;
+  }
+
+  thead tr:nth-child(2) th {
+    top: 2.4rem;
+    font: var(--mat-sys-label-small);
+    text-transform: capitalize;
+    opacity: 0.9;
+  }
+
+  .role {
+    padding: 0.6rem 0.75rem;
+    border-left: 1px solid rgb(255 255 255 / 18%);
+  }
+
+  .lock {
+    width: 1rem;
+    height: 1rem;
+    margin-left: 0.25rem;
+    font-size: 1rem;
+    vertical-align: middle;
+  }
+
+  // The module column stays visible while scrolling sideways.
+  .module {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    min-width: 11rem;
+    padding: 0.5rem 1rem;
+    background: var(--mat-sys-surface-container-lowest);
+    text-align: left;
+    font: var(--mat-sys-label-large);
+  }
+
+  thead .module {
+    background: var(--brand-header);
+    z-index: 4;
+  }
+
+  tbody tr:hover td,
+  tbody tr:hover .module {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  // First checkbox of each role gets a divider so the groups of four read as one role.
+  .cell:nth-child(4n + 2) {
+    border-left: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.section-title {
+  margin: 2rem 0 0.25rem;
+  font: var(--mat-sys-title-large);
+}
+
+.section-hint {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.matrix--single {
+  .module .hint {
+    display: block;
+    font: var(--mat-sys-body-small);
+    font-weight: 400;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: normal;
+  }
+
+  .cell:nth-child(n + 2) {
+    border-left: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  thead th {
+    top: 0;
+  }
+}

@@ -1,0 +1,74 @@
+/// Global permission catalogue (no tenantId), e.g. key "worksheet.assign".
+model Permission {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key         String   @unique
+  module      String
+  description String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  roles RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+model Role {
+  id          String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId    String    @db.Uuid
+  key         String
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy   String?   @db.Uuid
+  updatedAt   DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime? @db.Timestamptz(3)
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  permissions RolePermission[]
+  users       UserRole[]
+  positions   Position[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, key], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@map("roles")
+}
+
+/// Join table: hard delete; every add/remove writes an audit_logs row.
+model RolePermission {
+  id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId     String   @db.Uuid
+  roleId       String   @db.Uuid
+  permissionId String   @db.Uuid
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  createdBy    String?  @db.Uuid
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  role       Role       @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, roleId, permissionId])
+  @@index([tenantId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+/// Join table: hard delete; every add/remove writes an audit_logs row.
+model UserRole {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String   @db.Uuid
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdBy String?  @db.Uuid
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  user   User   @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  role   Role   @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, userId, roleId])
+  @@index([tenantId])
+  @@index([tenantId, roleId])
+  @@map("user_roles")
+}

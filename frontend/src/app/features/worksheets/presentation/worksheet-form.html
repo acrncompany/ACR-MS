@@ -1,0 +1,537 @@
+@let d = draft();
+@let s = sheet();
+
+<!-- Header -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('header')">
+  <header class="card__head">
+    <h2>Header</h2>
+    @if (active('header')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <div class="grid">
+    <app-ws-text label="Work no" [value]="s.workNo" [readonly]="true" />
+    <app-ws-text
+      label="Received date"
+      type="date"
+      [(value)]="d.receivedDate"
+      [readonly]="ro('header')"
+    />
+    <app-ws-text label="Work assign date" type="date" [value]="s.assignDate" [readonly]="true" />
+    <app-ws-text label="Target date" type="date" [value]="s.targetDate" [readonly]="true" />
+    <app-ws-text label="Reference" [(value)]="d.reference" [readonly]="ro('header')" />
+    <app-ws-text label="Mobile" type="tel" [(value)]="d.mobile" [readonly]="ro('header')" />
+    <app-ws-text label="Others" [(value)]="d.others" [readonly]="ro('header')" />
+  </div>
+  <h3>Contacts</h3>
+  @for (contact of d.contacts; track $index; let i = $index) {
+    <div class="row row--contact">
+      <app-ws-text label="Name" [(value)]="contact.name" [readonly]="ro('header')" />
+      <app-ws-text label="Phone" type="tel" [(value)]="contact.phone" [readonly]="ro('header')" />
+      <app-ws-text label="Email" type="email" [(value)]="contact.email" [readonly]="ro('header')" />
+      @if (active('header')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove contact"
+          (click)="remove(d.contacts, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">No contacts recorded.</p>
+  }
+  @if (active('header')) {
+    <button mat-stroked-button type="button" (click)="addContact()">
+      <mat-icon>add</mat-icon> Add contact
+    </button>
+  }
+</mat-card>
+
+<!-- Assignment (filled by the stage actions, never typed in) -->
+<mat-card appearance="outlined" class="card">
+  <header class="card__head">
+    <h2>Assignment</h2>
+    <span class="hint">Filled in automatically by the stage actions.</span>
+  </header>
+  <div class="grid">
+    <app-ws-text label="Assigned by" [value]="names()(s.assignedById)" [readonly]="true" />
+    <app-ws-text label="Operations Manager" [value]="names()(s.assignedOpsId)" [readonly]="true" />
+    <app-ws-text label="Assigned to TL" [value]="names()(s.assignedTlId)" [readonly]="true" />
+    <app-ws-text label="Assigned to TM" [value]="names()(s.assignedTmId)" [readonly]="true" />
+  </div>
+</mat-card>
+
+<!-- Client -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('client')">
+  <header class="card__head">
+    <h2>Client</h2>
+    @if (active('client')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <app-ws-select
+    label="Client"
+    [options]="clientOptions()"
+    [allowEmpty]="false"
+    [(value)]="d.clientId"
+    [readonly]="ro('client')"
+  />
+  @if (client(); as c) {
+    <dl class="facts">
+      <div>
+        <dt>Constitution</dt>
+        <dd>{{ c.constitution }}</dd>
+      </div>
+      <div>
+        <dt>PAN</dt>
+        <dd>{{ c.pan }}</dd>
+      </div>
+      <div>
+        <dt>GSTIN</dt>
+        <dd>{{ c.gstin || '—' }}</dd>
+      </div>
+      <div>
+        <dt>Previous auditor</dt>
+        <dd>{{ c.previousAuditor || '—' }}</dd>
+      </div>
+      <div class="wide">
+        <dt>Address</dt>
+        <dd>{{ c.address }}, {{ c.city }}</dd>
+      </div>
+      <div class="wide">
+        <dt>Proprietor / partners / directors</dt>
+        <dd>
+          @for (p of c.principals; track p.name) {
+            <span class="person">{{ p.name }} ({{ p.designation }}) · {{ p.mobile }}</span>
+          }
+        </dd>
+      </div>
+    </dl>
+  }
+</mat-card>
+
+@if (client(); as c) {
+  <app-credentials-card
+    [clientId]="c.id"
+    [credentialsSet]="c.credentialsSet"
+    [worksheetId]="s.id"
+    (revealedField)="credentialRevealed.emit($event)"
+  />
+}
+
+<!-- Work -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('work')">
+  <header class="card__head">
+    <h2>Work</h2>
+    @if (active('work')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <div class="grid">
+    <app-ws-select
+      label="Nature of work"
+      [options]="typeOptions()"
+      [allowEmpty]="false"
+      [(value)]="d.workTypeKey"
+      [readonly]="ro('work')"
+    />
+    <app-ws-text label="Period / year" [(value)]="d.period" [readonly]="ro('work')" />
+    <app-ws-number label="Score" [(value)]="d.score" [readonly]="ro('work')" />
+  </div>
+
+  <h3>Specific requirements</h3>
+  @for (req of d.requirements; track $index; let i = $index) {
+    <div class="row row--single">
+      <app-ws-text
+        label="Requirement"
+        [value]="req"
+        (valueChange)="setItem(d.requirements, i, $event)"
+        [readonly]="ro('work')"
+      />
+      @if (active('work')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove requirement"
+          (click)="remove(d.requirements, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">None recorded.</p>
+  }
+  @if (active('work')) {
+    <button mat-stroked-button type="button" (click)="addRequirement()">
+      <mat-icon>add</mat-icon> Add requirement
+    </button>
+  }
+
+  <h3>Pending bills</h3>
+  @for (bill of d.pendingBills; track $index; let i = $index) {
+    <div class="row row--pair">
+      <app-ws-text label="Bill ref" [(value)]="bill.ref" [readonly]="ro('work')" />
+      <app-ws-number label="Amount" prefix="₹" [(value)]="bill.amount" [readonly]="ro('work')" />
+      @if (active('work')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove bill"
+          (click)="remove(d.pendingBills, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">No pending bills.</p>
+  }
+  @if (active('work')) {
+    <button mat-stroked-button type="button" (click)="addBill()">
+      <mat-icon>add</mat-icon> Add bill
+    </button>
+  }
+</mat-card>
+
+<!-- Documents -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('documents')">
+  <header class="card__head">
+    <h2>Documents</h2>
+    @if (active('documents')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <h3>Handed over by the client</h3>
+  @for (doc of d.documents; track $index; let i = $index) {
+    <div class="row row--pair">
+      <app-ws-text label="Document" [(value)]="doc.name" [readonly]="ro('documents')" />
+      <app-ws-text
+        label="Received on"
+        type="date"
+        [(value)]="doc.receivedOn"
+        [readonly]="ro('documents')"
+      />
+      @if (active('documents')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove document"
+          (click)="remove(d.documents, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">Nothing recorded.</p>
+  }
+  @if (active('documents')) {
+    <button mat-stroked-button type="button" (click)="addDocument()">
+      <mat-icon>add</mat-icon> Add document
+    </button>
+  }
+  <h3>Returned to the client</h3>
+  @for (item of d.returned; track $index; let i = $index) {
+    <div class="row row--pair">
+      <app-ws-text label="Item" [(value)]="item.name" [readonly]="ro('documents')" />
+      <app-ws-text
+        label="Returned on"
+        type="date"
+        [(value)]="item.returnedOn"
+        [readonly]="ro('documents')"
+      />
+      @if (active('documents')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove item"
+          (click)="remove(d.returned, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">Nothing returned yet.</p>
+  }
+  @if (active('documents')) {
+    <button mat-stroked-button type="button" (click)="addReturned()">
+      <mat-icon>add</mat-icon> Add returned item
+    </button>
+  }
+</mat-card>
+
+<!-- Filing details -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('filing')">
+  <header class="card__head">
+    <h2>Filing details</h2>
+    @if (active('filing')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <div class="grid">
+    <app-ws-text
+      label="IT filed date"
+      type="date"
+      [(value)]="d.filing.itFiledDate"
+      [readonly]="ro('filing')"
+    />
+    <app-ws-text label="Ack no" [(value)]="d.filing.ackNo" [readonly]="ro('filing')" />
+    <app-ws-text label="UDIN" [(value)]="d.filing.udin" [readonly]="ro('filing')" />
+    <app-ws-text
+      label="UDIN date"
+      type="date"
+      [(value)]="d.filing.udinDate"
+      [readonly]="ro('filing')"
+    />
+    <app-ws-text
+      label="ITR-V sent date"
+      type="date"
+      [(value)]="d.filing.itrVSentDate"
+      [readonly]="ro('filing')"
+    />
+    <app-ws-select
+      label="IT verified"
+      [options]="yesNo"
+      [(value)]="d.filing.itVerified"
+      [readonly]="ro('filing')"
+    />
+    <app-ws-select
+      label="Verified mode"
+      [options]="verifyModes()"
+      [(value)]="d.filing.itVerifiedMode"
+      [readonly]="ro('filing')"
+    />
+    <app-ws-text
+      label="Verified date"
+      type="date"
+      [(value)]="d.filing.itVerifiedDate"
+      [readonly]="ro('filing')"
+    />
+  </div>
+</mat-card>
+
+<!-- Tax -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('tax')">
+  <header class="card__head">
+    <h2>Tax</h2>
+    @if (active('tax')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <div class="grid">
+    <app-ws-select
+      label="Payable / refund"
+      [options]="taxKinds"
+      [(value)]="d.tax.kind"
+      [readonly]="ro('tax')"
+    />
+    <app-ws-number label="Amount" prefix="₹" [(value)]="d.tax.amount" [readonly]="ro('tax')" />
+    <app-ws-text label="Financial year" [(value)]="d.tax.fy" [readonly]="ro('tax')" />
+    <app-ws-text
+      label="Payment date"
+      type="date"
+      [(value)]="d.tax.paymentDate"
+      [readonly]="ro('tax')"
+    />
+    <app-ws-select
+      label="Payment mode"
+      [options]="paymentModes()"
+      [(value)]="d.tax.paymentMode"
+      [readonly]="ro('tax')"
+    />
+    <app-ws-text
+      label="Receipt date"
+      type="date"
+      [(value)]="d.tax.receiptDate"
+      [readonly]="ro('tax')"
+    />
+    <app-ws-select
+      label="Receipt mode"
+      [options]="paymentModes()"
+      [(value)]="d.tax.receiptMode"
+      [readonly]="ro('tax')"
+    />
+  </div>
+</mat-card>
+
+<!-- Completion (read-only; stamped by the stage actions) -->
+<mat-card appearance="outlined" class="card">
+  <header class="card__head">
+    <h2>Completion</h2>
+    <span class="hint">Signed automatically when each step is done.</span>
+  </header>
+  <ul class="steps">
+    <li>
+      <strong>Work finished</strong>
+      @if (s.completion.finished.stamp) {
+        <span class="stamp">{{ stamp(s.completion.finished.stamp) }}</span>
+        @if (s.completion.finished.comments) {
+          <span class="comment">“{{ s.completion.finished.comments }}”</span>
+        }
+      } @else {
+        <span class="pending">Not yet</span>
+      }
+    </li>
+    <li>
+      <strong>Work finalized</strong>
+      @if (s.completion.finalized.stamp) {
+        <span class="stamp">{{ stamp(s.completion.finalized.stamp) }}</span>
+        @if (s.completion.finalized.comments) {
+          <span class="comment">“{{ s.completion.finalized.comments }}”</span>
+        }
+      } @else {
+        <span class="pending">Not yet</span>
+      }
+    </li>
+    <li>
+      <strong>Documented</strong>
+      @if (s.completion.documented.stamp) {
+        <span class="stamp">{{ stamp(s.completion.documented.stamp) }}</span>
+        @if (s.completion.documented.comments) {
+          <span class="comment">“{{ s.completion.documented.comments }}”</span>
+        }
+      } @else {
+        <span class="pending">Not yet</span>
+      }
+    </li>
+  </ul>
+</mat-card>
+
+<!-- Documentation -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('documentation')">
+  <header class="card__head">
+    <h2>Documentation</h2>
+    @if (active('documentation')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <h3>Checklist</h3>
+  <ul class="checklist">
+    @for (item of d.completion.checklist; track item.label) {
+      <li>
+        <mat-checkbox
+          [checked]="item.done"
+          [disabled]="ro('documentation')"
+          (change)="item.done = $event.checked"
+        >
+          {{ item.label }}
+        </mat-checkbox>
+      </li>
+    }
+  </ul>
+  <h3>Folder locations</h3>
+  @for (location of d.completion.folderLocations; track $index; let i = $index) {
+    <div class="row row--single">
+      <app-ws-text
+        label="Location"
+        [value]="location"
+        (valueChange)="setLocation(i, $event)"
+        [readonly]="ro('documentation')"
+      />
+      @if (active('documentation')) {
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Remove location"
+          (click)="remove(d.completion.folderLocations, i)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="none">No location recorded.</p>
+  }
+  @if (active('documentation')) {
+    <button mat-stroked-button type="button" (click)="addFolder()">
+      <mat-icon>add</mat-icon> Add location
+    </button>
+  }
+</mat-card>
+
+<!-- Office approval (read-only; recorded by the approval actions) -->
+<mat-card appearance="outlined" class="card">
+  <header class="card__head">
+    <h2>Office approval</h2>
+    <span class="hint">Recorded by the approval stage.</span>
+  </header>
+  @if (s.officeApproval.decision) {
+    <p>
+      <span class="status status--{{ decisionTone(s.officeApproval.decision) }}">
+        {{ s.officeApproval.decision }}
+      </span>
+      <span class="stamp">{{ stamp(s.officeApproval.stamp) }}</span>
+    </p>
+    @if (s.officeApproval.comments) {
+      <p class="comment">“{{ s.officeApproval.comments }}”</p>
+    }
+  } @else {
+    <p class="pending">No decision yet.</p>
+  }
+</mat-card>
+
+<!-- Delivery & billing -->
+<mat-card appearance="outlined" class="card" [class.card--active]="active('delivery')">
+  <header class="card__head">
+    <h2>Delivery &amp; billing</h2>
+    @if (active('delivery')) {
+      <span class="badge">Editable now</span>
+    }
+  </header>
+  <div class="grid">
+    <app-ws-select
+      label="Delivery mode"
+      [options]="deliveryModes()"
+      [(value)]="d.delivery.mode"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-text label="Delivery items" [(value)]="d.delivery.items" [readonly]="ro('delivery')" />
+    <app-ws-text
+      label="Delivery date"
+      type="date"
+      [(value)]="d.delivery.date"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-text
+      label="Receiver name"
+      [(value)]="d.delivery.receiverName"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-text
+      label="Receiver phone"
+      type="tel"
+      [(value)]="d.delivery.receiverPhone"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-text label="Invoice no" [(value)]="d.delivery.invoiceNo" [readonly]="ro('delivery')" />
+    <app-ws-number
+      label="Invoice amount"
+      prefix="₹"
+      [(value)]="d.delivery.invoiceAmount"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-number
+      label="Fee receipt amount"
+      prefix="₹"
+      [(value)]="d.delivery.receiptAmount"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-text
+      label="Fee receipt date"
+      type="date"
+      [(value)]="d.delivery.receiptDate"
+      [readonly]="ro('delivery')"
+    />
+    <app-ws-select
+      label="Fee receipt mode"
+      [options]="paymentModes()"
+      [(value)]="d.delivery.receiptMode"
+      [readonly]="ro('delivery')"
+    />
+  </div>
+</mat-card>
