@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../core/database/prisma.service.js';
 import { SystemPrismaService } from '../../../core/database/system-prisma.service.js';
-import { TenantEntity } from '../domain/tenant.entity.js';
+import { SessionPolicy, TenantEntity, TenantProfile } from '../domain/tenant.entity.js';
 import { TenantRepository } from '../domain/tenant.repository.js';
 
 interface TenantLookupRow {
@@ -17,8 +18,44 @@ interface TenantLookupRow {
  */
 @Injectable()
 export class PrismaTenantRepository extends TenantRepository {
-  constructor(private readonly system: SystemPrismaService) {
+  constructor(
+    private readonly system: SystemPrismaService,
+    private readonly prisma: PrismaService,
+  ) {
     super();
+  }
+
+  async findCurrentProfile(): Promise<TenantProfile | null> {
+    // `tenants` is not auto-scoped; RLS (app.tenant_id) limits it to the current tenant's row.
+    const tenant = await this.prisma.client.tenant.findFirst({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        status: true,
+        settings: { select: { branding: true, defaultLocale: true } },
+      },
+    });
+    if (!tenant) return null;
+    const branding = tenant.settings?.branding;
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      status: tenant.status,
+      branding:
+        branding && typeof branding === 'object' && !Array.isArray(branding) ? branding : {},
+      defaultLocale: tenant.settings?.defaultLocale ?? 'en',
+    };
+  }
+
+  async findCurrentSessionPolicy(): Promise<SessionPolicy> {
+    const settings = await this.prisma.client.tenantSettings.findFirst({
+      where: { deletedAt: null },
+      select: { refreshTokenDays: true, sessionMaxDays: true, idleTimeoutMinutes: true },
+    });
+    return settings ?? { refreshTokenDays: 7, sessionMaxDays: 30, idleTimeoutMinutes: null };
   }
 
   async findActiveBySlug(slug: string): Promise<TenantEntity | null> {

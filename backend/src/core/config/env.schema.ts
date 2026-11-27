@@ -19,6 +19,40 @@ export const envSchema = z.object({
     .regex(/^\d+[smhd]$/, 'JWT_EXPIRES_IN must look like 15m, 1h or 900s')
     .default('15m'),
   TENANT_BASE_DOMAIN: z.string().min(1),
+  /**
+   * Master key for field-level encryption of client portal credentials: 32 random bytes,
+   * base64. No default, never committed. Per-tenant keys are derived from it with HKDF.
+   * Generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+   */
+  CREDENTIAL_MASTER_KEY: z
+    .string()
+    .min(1, 'CREDENTIAL_MASTER_KEY is required')
+    .refine((value) => Buffer.from(value, 'base64').length === 32, {
+      message: 'CREDENTIAL_MASTER_KEY must be 32 random bytes encoded as base64',
+    }),
+  /** Id of the derived key used to encrypt NEW values (stored per row, so keys can be rotated). */
+  CREDENTIAL_KEY_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,32}$/)
+    .default('v1'),
+  /** Name of the httpOnly refresh-token cookie. */
+  REFRESH_COOKIE_NAME: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .default('acrms_rt'),
+  /** Cookie path: the refresh token is only sent to the auth endpoints. */
+  REFRESH_COOKIE_PATH: z.string().startsWith('/').default('/api/v1/auth'),
+  /** Failed logins before the account is locked. */
+  LOGIN_MAX_FAILURES: z.coerce.number().int().min(1).default(5),
+  /** How long an account stays locked after too many failures. */
+  LOGIN_LOCK_MINUTES: z.coerce.number().int().min(1).default(15),
+  /** Requests per THROTTLE_TTL_SECONDS and IP: login, refresh, and everything else. */
+  THROTTLE_TTL_SECONDS: z.coerce.number().int().min(1).default(60),
+  THROTTLE_LOGIN_LIMIT: z.coerce.number().int().min(1).default(10),
+  THROTTLE_REFRESH_LIMIT: z.coerce.number().int().min(1).default(30),
+  THROTTLE_DEFAULT_LIMIT: z.coerce.number().int().min(1).default(300),
+  /** Reverse proxies in front of the app (for the real client IP). 0 = none. */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   CORS_ORIGINS: z
     .string()
     .min(1)

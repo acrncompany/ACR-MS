@@ -1,9 +1,19 @@
 import { Injectable, computed, signal } from '@angular/core';
 
+export interface SessionBranch {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface SessionUser {
   id: string;
   name: string;
   email: string;
+  /** EMP-0001... */
+  employeeCode?: string;
+  /** An admin set a temporary password: the user must choose their own first. */
+  mustChangePassword?: boolean;
   roleId: string;
   /** Role display name, e.g. "Finance Officer (Team Lead)". */
   role: string;
@@ -13,6 +23,10 @@ export interface SessionUser {
   seesAll: boolean;
   /** Permission keys such as "clients.view". */
   permissions: string[];
+  /** Branches the user may work in (from the backend). */
+  branches?: SessionBranch[];
+  /** Tenant display name (from the backend). */
+  tenantName?: string;
 }
 
 export interface Session {
@@ -20,51 +34,60 @@ export interface Session {
   accessToken: string;
 }
 
-const STORAGE_KEY = 'session-v3';
-
 /**
- * Holds the signed-in session. Knows nothing about how login happens (that is the data layer).
+ * Holds the signed-in session IN MEMORY ONLY. Nothing is written to localStorage or
+ * sessionStorage: the access token must not be readable by injected scripts, and a reload
+ * restores the session from the httpOnly refresh cookie instead (see AuthService.restore).
+ * Knows nothing about how login happens (that is the data layer).
  * Permission checks here are for UX only; the backend must enforce every permission.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
-  private readonly state = signal<Session | null>(this.restore());
+  private readonly token = signal<string | null>(null);
+  private readonly profile = signal<SessionUser | null>(null);
 
-  readonly user = computed(() => this.state()?.user ?? null);
-  readonly accessToken = computed(() => this.state()?.accessToken ?? null);
-  readonly isAuthenticated = computed(() => this.state() !== null);
+  readonly user = this.profile.asReadonly();
+  readonly accessToken = this.token.asReadonly();
+  readonly isAuthenticated = computed(() => this.profile() !== null);
+
+  constructor() {
+    // Older builds kept the whole session (including the token) in sessionStorage.
+    try {
+      sessionStorage.removeItem('session-v3');
+    } catch {
+      // storage may be blocked; nothing to clean up then
+    }
+  }
 
   /** `permission` is "module.action", e.g. "clients.edit". */
   can(permission: string): boolean {
-    return this.state()?.user.permissions.includes(permission) ?? false;
+    return this.profile()?.permissions.includes(permission) ?? false;
   }
 
   start(session: Session): void {
-    this.state.set(session);
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    } catch {
-      // ignore
-    }
+    this.token.set(session.accessToken);
+    this.profile.set(session.user);
+  }
+
+  /** Replaces the access token after a silent refresh; the user stays signed in. */
+  setAccessToken(accessToken: string): void {
+    this.token.set(accessToken);
+  }
+
+  /** After the user chose their own password. */
+  markPasswordChanged(): void {
+    const user = this.profile();
+    if (user) this.profile.set({ ...user, mustChangePassword: false });
+  }
+
+  /** The server said a password change is required (403 PASSWORD_CHANGE_REQUIRED). */
+  markPasswordChangeRequired(): void {
+    const user = this.profile();
+    if (user) this.profile.set({ ...user, mustChangePassword: true });
   }
 
   end(): void {
-    this.state.set(null);
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  }
-
-  private restore(): Session | null {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      const session = raw ? (JSON.parse(raw) as Session) : null;
-      // Sessions saved by an older build lack roleId; treat them as signed out.
-      return session?.user.roleId ? session : null;
-    } catch {
-      return null;
-    }
+    this.token.set(null);
+    this.profile.set(null);
   }
 }

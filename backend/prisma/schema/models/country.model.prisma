@@ -1,0 +1,22 @@
+// Global reference data: no tenantId and no RLS; the runtime role acrms_app can only SELECT it.
+model Country {
+  id              String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  /// ISO 3166-1 alpha-2, e.g. IN
+  isoCode         String   @unique @db.Char(2)
+  name            String
+  currencyCode    String   @db.Char(3)
+  /// E.164 prefix without "+", e.g. 91
+  phoneCode       String
+  /// IANA zone, e.g. Asia/Kolkata
+  defaultTimezone String
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  currency  Currency  @relation(fields: [currencyCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  regions   Region[]
+  companies Company[]
+  branches  Branch[]
+
+  @@index([currencyCode])
+  @@map("countries")
+}

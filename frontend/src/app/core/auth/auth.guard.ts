@@ -3,7 +3,16 @@ import { CanActivateFn, Router } from '@angular/router';
 import { NAV_ITEMS } from '../layout/nav-items';
 import { SessionService } from './session.service';
 
+/** Signed in. A user who still has a temporary password is sent to choose their own first. */
 export const authGuard: CanActivateFn = () => {
+  const session = inject(SessionService);
+  const router = inject(Router);
+  if (!session.isAuthenticated()) return router.createUrlTree(['/login']);
+  return session.user()?.mustChangePassword ? router.createUrlTree(['/change-password']) : true;
+};
+
+/** Signed in, without the temporary-password redirect (for the change-password page itself). */
+export const signedInGuard: CanActivateFn = () => {
   const session = inject(SessionService);
   return session.isAuthenticated() ? true : inject(Router).createUrlTree(['/login']);
 };

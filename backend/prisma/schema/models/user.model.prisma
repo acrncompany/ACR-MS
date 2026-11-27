@@ -1,0 +1,49 @@
+model User {
+  id                 String     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId           String     @db.Uuid
+  /// Always lowercase (CHECK constraint). Unique per tenant among non-deleted users.
+  email              String
+  name               String
+  /// EMP-0001... Issued once from code_sequences, never changed, never reused. Unique per tenant
+  /// WITHOUT a partial index, so it stays reserved after a soft delete.
+  employeeCode       String
+  phone              String?
+  address            String?
+  dateOfBirth        DateTime?  @db.Date
+  dateOfJoining      DateTime?  @db.Date
+  passwordHash       String
+  /// True after an admin sets or generates a temporary password; every endpoint except
+  /// change-password, me and logout is blocked until the user chooses their own.
+  mustChangePassword Boolean    @default(false)
+  status             UserStatus @default(ACTIVE)
+  positionId         String?    @db.Uuid
+  managerId          String?    @db.Uuid
+  homeBranchId       String?    @db.Uuid
+  lastLoginAt        DateTime?  @db.Timestamptz(3)
+  failedLoginCount   Int        @default(0)
+  lockedUntil        DateTime?  @db.Timestamptz(3)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(3)
+  createdBy          String?    @db.Uuid
+  updatedAt          DateTime   @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt          DateTime?  @db.Timestamptz(3)
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  position     OrgPosition?       @relation(fields: [tenantId, positionId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  manager      User?              @relation("UserManager", fields: [tenantId, managerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  reports      User[]             @relation("UserManager")
+  homeBranch   Branch?            @relation(fields: [tenantId, homeBranchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  branchAccess UserBranchAccess[]
+  roles        UserRole[]
+  sessions     Session[]
+  auditLogs    AuditLog[]
+  clientTeams  ClientTeamMember[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, employeeCode])
+  @@unique([tenantId, email], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([tenantId, positionId])
+  @@index([tenantId, managerId])
+  @@index([tenantId, homeBranchId])
+  @@map("users")
+}

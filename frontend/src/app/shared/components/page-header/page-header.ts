@@ -5,7 +5,14 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   selector: 'app-page-header',
   template: `
     <div>
-      <h1>{{ title() }}</h1>
+      @if (title()) {
+        <h1>
+          {{ title() }}
+          @if (badge()) {
+            <span class="badge">{{ badge() }}</span>
+          }
+        </h1>
+      }
     </div>
     <div class="actions"><ng-content /></div>
   `,
@@ -23,6 +30,16 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       font: var(--mat-sys-headline-medium);
       font-weight: 600;
     }
+    .badge {
+      margin-left: 0.5rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      font: var(--mat-sys-label-large);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
     .actions {
       display: flex;
       gap: 0.5rem;
@@ -32,5 +49,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageHeader {
-  readonly title = input.required<string>();
+  /** Empty hides the heading (the page already shows its name elsewhere). */
+  readonly title = input('');
+  /** Small chip next to the title, e.g. a permanent code. */
+  readonly badge = input('');
 }

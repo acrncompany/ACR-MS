@@ -89,12 +89,12 @@ html {
     light-dark(#eaf8f0, #132a1e) 100%
   );
 
-  // Sidebar: white floating panel; the active item is a dark-green pill.
-  --sidebar-bg: light-dark(#dcf2e5, #141b17);
-  --sidebar-text: var(--mat-sys-on-surface-variant);
-  --sidebar-text-strong: var(--mat-sys-on-surface);
-  --sidebar-hover: light-dark(#c6e9d5, #1b3a2a);
-  --sidebar-active: var(--feature-gradient);
+  // Sidebar: solid base green; hover and active items are a light white wash.
+  --sidebar-bg: var(--brand-deep);
+  --sidebar-text: rgb(255 255 255 / 85%);
+  --sidebar-text-strong: #ffffff;
+  --sidebar-hover: rgb(255 255 255 / 15%);
+  --sidebar-active: rgb(255 255 255 / 25%);
   --sidebar-accent: light-dark(#12b564, #3fd488);
 
   // Status / KPI tones.
@@ -168,19 +168,19 @@ mat-card.mat-mdc-card {
   }
 }
 
-// AG Grid follows the Material tokens; the header row is dark green like the brand.
+// AG Grid follows the Material tokens; the header row is light yellow (#fff3b0) with black text.
 .app-grid {
   width: 100%;
   --ag-background-color: var(--mat-sys-surface-container-lowest);
   --ag-foreground-color: var(--mat-sys-on-surface);
-  --ag-header-background-color: var(--brand-header);
-  --ag-header-text-color: #ffffff;
+  --ag-header-background-color: #fff3b0;
+  --ag-header-text-color: #000000;
   --ag-selected-row-background-color: var(--mat-sys-primary-container);
   --ag-border-color: var(--mat-sys-outline-variant);
   --ag-accent-color: var(--mat-sys-primary);
   --ag-odd-row-background-color: var(--mat-sys-surface-container-lowest);
   --ag-row-hover-color: var(--mat-sys-surface-container-low);
-  --ag-header-column-resize-handle-color: rgb(255 255 255 / 25%);
+  --ag-header-column-resize-handle-color: rgb(0 0 0 / 20%);
 }
 
 // Compact filter bars: small pills with a chevron (<app-filter-select>, <app-filter-search>).
@@ -288,9 +288,136 @@ mat-card.mat-mdc-card {
   }
 }
 
+// Icon-only action (e.g. the pencil) in a grid cell: no background, just the glyph.
+.grid-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    background: transparent;
+    color: var(--mat-sys-primary);
+  }
+}
+
+// Dialogs (new / edit modals): square corners, a dark compact header with a close button, and a
+// footer band for the actions.
+:root {
+  --mat-dialog-container-shape: 0;
+  --mat-dialog-container-min-width: 30rem;
+  --mat-dialog-container-max-width: 92vw;
+}
+
+.mat-mdc-dialog-surface {
+  border-radius: 0 !important;
+  overflow: hidden;
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.4rem 0.5rem 0.4rem 1.25rem !important;
+  background: var(--mat-sys-secondary);
+  // Material's own title tokens win over a plain `color`, so set the tokens (and the colour).
+  --mat-dialog-subhead-color: var(--mat-sys-on-secondary);
+  --mat-dialog-subhead-size: 1.05rem;
+  --mat-dialog-subhead-weight: 700;
+  --mat-dialog-subhead-line-height: 1.9rem;
+  color: var(--mat-sys-on-secondary) !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.9rem;
+
+  // Material adds a spacer pseudo-element above the title; the band needs none.
+  &::before {
+    display: none;
+  }
+
+  .code {
+    background: color-mix(in srgb, var(--mat-sys-on-secondary) 20%, transparent) !important;
+    color: var(--mat-sys-on-secondary) !important;
+  }
+}
+
+// Close button added to every dialog title by DialogChrome.
+.dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0.3rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-on-secondary) 18%, transparent);
+  }
+}
+
+.mat-mdc-dialog-content {
+  // The dialog grows to fit its fields instead of scrolling inside.
+  max-height: none !important;
+  overflow: visible !important;
+  padding: 1.75rem 1.5rem 1rem !important;
+
+  // Shorter fields.
+  .mat-mdc-form-field {
+    --mat-form-field-container-height: 40px;
+    --mat-form-field-container-vertical-padding: 8px;
+    --mat-form-field-filled-with-label-container-padding-top: 16px;
+    --mat-form-field-filled-with-label-container-padding-bottom: 4px;
+  }
+}
+
+.mat-mdc-dialog-actions {
+  min-height: 0 !important;
+  padding: 0.6rem 1.25rem !important;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container);
+
+  // Cancel / Save: no rounded corners.
+  --mat-button-text-container-shape: 0;
+  --mat-button-filled-container-shape: 0;
+  --mat-button-outlined-container-shape: 0;
+  --mat-button-protected-container-shape: 0;
+  --mat-button-text-container-height: 32px;
+  --mat-button-filled-container-height: 32px;
+  --mat-button-outlined-container-height: 32px;
+
+  .mat-mdc-button-base {
+    border-radius: 0;
+  }
+}
+
 // Material 3 buttons and fields get a softer, rounder look.
 .mat-mdc-unelevated-button,
 .mat-mdc-outlined-button {
   --mat-button-filled-container-shape: 12px;
   --mat-button-outlined-container-shape: 12px;
+}
+
+// A routed list page (one that shows an <app-data-page>) fills the shell's content area, so its
+// grid gets the free height (the page itself never scrolls; only the grid does).
+.content > router-outlet + *:has(app-data-page) {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
 }

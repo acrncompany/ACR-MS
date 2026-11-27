@@ -1,0 +1,43 @@
+model Branch {
+  id           String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId     String       @db.Uuid
+  companyId    String       @db.Uuid
+  code         String
+  name         String
+  addressLine1 String?
+  addressLine2 String?
+  postalCode   String?
+  countryId    String       @db.Uuid
+  regionId     String?      @db.Uuid
+  districtId   String?      @db.Uuid
+  cityId       String?      @db.Uuid
+  /// IANA zone
+  timezone     String
+  status       BranchStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+  createdBy    String?      @db.Uuid
+  updatedAt    DateTime     @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt    DateTime?    @db.Timestamptz(3)
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  company  Company   @relation(fields: [tenantId, companyId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  country  Country   @relation(fields: [countryId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  region   Region?   @relation(fields: [regionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  district District? @relation(fields: [districtId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  city     City?     @relation(fields: [cityId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  homeUsers  User[]
+  userAccess UserBranchAccess[]
+  auditLogs  AuditLog[]
+  clients    Client[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([tenantId, companyId])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([districtId])
+  @@index([cityId])
+  @@map("branches")
+}

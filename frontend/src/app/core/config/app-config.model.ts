@@ -1,9 +1,25 @@
+/** Every feature that has a repository. A feature listed in `realFeatures` talks to the backend. */
+export const FEATURES = [
+  'auth',
+  'clients',
+  'users',
+  'organization',
+  'organisationTypes',
+  'works',
+  'people',
+  'worksheets',
+  'dashboard',
+  'hr',
+] as const;
+export type FeatureKey = (typeof FEATURES)[number];
+
 export interface AppConfig {
   /**
-   * Frontend-only mode: every feature repository uses its mock implementation and no request
-   * is sent to the backend. Must be false (or absent) in production.
+   * Features that use the REAL backend API. Every other feature uses its mock repository and
+   * sends no request. As features get a backend they move into this list; in production it must
+   * list every feature that has one.
    */
-  mockMode: boolean;
+  realFeatures: FeatureKey[];
   branding: {
     productName: string;
     tagline: string;

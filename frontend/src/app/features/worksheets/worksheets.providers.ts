@@ -9,6 +9,11 @@ import { WorksheetContext } from './presentation/worksheet.context';
 /** Work sheets read the client master, so the clients repository comes along. */
 export const worksheetsProviders: Provider[] = [
   ...clientsProviders,
-  provideRepository(WorksheetRepository, MockWorksheetRepository, ApiWorksheetRepository),
+  provideRepository(
+    WorksheetRepository,
+    'worksheets',
+    MockWorksheetRepository,
+    ApiWorksheetRepository,
+  ),
   WorksheetContext,
 ];

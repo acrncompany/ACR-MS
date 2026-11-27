@@ -60,8 +60,8 @@ beforeAll(async () => {
     ]);
   }
   await owner.query(
-    `INSERT INTO users (id, "tenantId", email, name, "passwordHash")
-     VALUES ($1, $2, 'a@rls.test', 'A', 'x'), ($3, $4, 'b@rls.test', 'B', 'x')`,
+    `INSERT INTO users (id, "tenantId", email, name, "employeeCode", "passwordHash")
+     VALUES ($1, $2, 'a@rls.test', 'A', 'EMP-0001', 'x'), ($3, $4, 'b@rls.test', 'B', 'EMP-0001', 'x')`,
     [userA, tenantA.id, userB, tenantB.id],
   );
   await owner.query(
@@ -121,7 +121,7 @@ describe('row-level security (raw SQL as acrms_app)', () => {
     await expect(
       asApp(
         tenantA.id,
-        `INSERT INTO users ("tenantId", email, name, "passwordHash") VALUES ($1, 'x@rls.test', 'X', 'x')`,
+        `INSERT INTO users ("tenantId", email, name, "employeeCode", "passwordHash") VALUES ($1, 'x@rls.test', 'X', 'EMP-0002', 'x')`,
         [tenantB.id],
       ),
     ).rejects.toThrow(/row-level security/);

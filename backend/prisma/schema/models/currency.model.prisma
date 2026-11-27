@@ -1,0 +1,15 @@
+// Global reference data: no tenantId and no RLS; the runtime role acrms_app can only SELECT it.
+model Currency {
+  /// ISO 4217 code, e.g. INR
+  code          String   @id @db.Char(3)
+  name          String
+  symbol        String
+  decimalPlaces Int      @default(2) @db.SmallInt
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  countries Country[]
+  companies Company[]
+
+  @@map("currencies")
+}

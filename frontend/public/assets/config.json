@@ -1,5 +1,13 @@
 {
-  "mockMode": true,
+  "realFeatures": [
+    "auth",
+    "clients",
+    "users",
+    "organization",
+    "organisationTypes",
+    "works",
+    "people"
+  ],
   "branding": {
     "productName": "ACR-MS",
     "tagline": "Practice management for Chartered Accountants",

@@ -8,18 +8,18 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
 import { SessionService } from '../../../core/auth/session.service';
+import { toApiError } from '../../../core/http/api-error';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { Position } from '../domain/admin.models';
-import { DirectoryRepository } from '../domain/directory.repository';
+import { loadedState } from '../../../shared/utils/loaded';
+import { Department, Position } from '../domain/admin.models';
+import { OrganizationRepository } from '../domain/organization.repository';
 import {
-  ConfirmDialog,
-  ConfirmDialogData,
-  NameDialog,
-  NameDialogData,
+  DepartmentDialog,
+  DepartmentDialogResult,
   PositionDialog,
   PositionDialogData,
+  PositionDialogResult,
 } from './admin-dialogs';
-import { ResetDemoButton } from './reset-demo-button';
 
 interface OrgNode {
   position: Position;
@@ -27,6 +27,11 @@ interface OrgNode {
   children: OrgNode[];
 }
 
+/**
+ * The organization chart: positions (the reporting hierarchy) and departments. Positions and
+ * departments are created and edited, never deleted. The server keeps codes unique and prevents
+ * a position from becoming its own descendant.
+ */
 @Component({
   selector: 'app-organization-page',
   imports: [
@@ -36,25 +41,35 @@ interface OrgNode {
     MatIconModule,
     MatMenuModule,
     PageHeader,
-    ResetDemoButton,
   ],
   templateUrl: './organization-page.html',
   styleUrl: './organization-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationPage {
-  private readonly repo = inject(DirectoryRepository);
+  private readonly repo = inject(OrganizationRepository);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly session = inject(SessionService);
 
   protected readonly canCreate = this.session.can('organization.create');
   protected readonly canEdit = this.session.can('organization.edit');
-  protected readonly departments = this.repo.departments;
+
+  private readonly departmentList = loadedState(() => this.repo.departments());
+  private readonly positionList = loadedState(() => this.repo.positions());
+  private readonly roleList = loadedState(() => this.repo.roles());
+
+  protected readonly departments = computed(() => this.departmentList.state().rows);
+  protected readonly loading = computed(
+    () => this.departmentList.state().loading || this.positionList.state().loading,
+  );
+  protected readonly error = computed(
+    () => this.departmentList.state().error ?? this.positionList.state().error,
+  );
 
   protected readonly roots = computed<OrgNode[]>(() => {
-    const positions = this.repo.positions();
-    const depts = new Map(this.repo.departments().map((d) => [d.id, d.name]));
+    const positions = this.positionList.state().rows;
+    const depts = new Map(this.departments().map((d) => [d.id, d.name]));
     const build = (parentId: string | null): OrgNode[] =>
       positions
         .filter((p) => p.parentId === parentId)
@@ -67,89 +82,69 @@ export class OrganizationPage {
   });
 
   protected addPosition(parentId: string | null): void {
-    this.openPosition({ title: 'Add position', parentId }, (value) => this.repo.addPosition(value));
+    this.openPosition({ title: 'Add position', parentId }, (r) =>
+      this.repo.addPosition({ ...r.input, code: r.code ?? '' }),
+    );
   }
 
   protected editPosition(position: Position, title: string): void {
-    this.openPosition({ title, position }, (value) => this.repo.updatePosition(position.id, value));
-  }
-
-  protected removePosition(position: Position): void {
-    this.confirm(
-      {
-        title: `Remove "${position.title}"?`,
-        message: 'The position must have no reports and no users.',
-        confirmLabel: 'Remove',
-      },
-      () => this.repo.removePosition(position.id),
-    );
+    this.openPosition({ title, position }, (r) => this.repo.updatePosition(position.id, r.input));
   }
 
   protected addDepartment(): void {
-    this.askName(
-      { title: 'Add department', label: 'Department name', confirmLabel: 'Add' },
-      (name) => this.repo.addDepartment(name),
+    this.openDepartment({ title: 'Add department' }, (r) =>
+      this.repo.addDepartment({ ...r.input, code: r.code ?? '' }),
     );
   }
 
-  protected renameDepartment(id: string, current: string): void {
-    this.askName({ title: 'Rename department', label: 'Department name', value: current }, (name) =>
-      this.repo.renameDepartment(id, name),
-    );
-  }
-
-  protected removeDepartment(id: string, name: string): void {
-    this.confirm(
-      {
-        title: `Remove "${name}"?`,
-        message: 'The department must have no positions.',
-        confirmLabel: 'Remove',
-      },
-      () => this.repo.removeDepartment(id),
+  protected editDepartment(department: Department): void {
+    this.openDepartment({ title: 'Edit department', department }, (r) =>
+      this.repo.updateDepartment(department.id, r.input),
     );
   }
 
   private openPosition(
     extra: Pick<PositionDialogData, 'title' | 'position' | 'parentId'>,
-    save: (value: Omit<Position, 'id'>) => Observable<void>,
+    save: (result: PositionDialogResult) => Observable<unknown>,
   ): void {
     const position = extra.position;
     const data: PositionDialogData = {
       ...extra,
-      departments: this.repo.departments(),
-      roles: this.repo.roles(),
-      positions: this.repo.positions(),
+      departments: this.departmentList.state().rows,
+      roles: this.roleList.state().rows,
+      positions: this.positionList.state().rows,
       excludedParents: position ? [position.id, ...this.descendants(position.id)] : [],
     };
     this.dialog
       .open(PositionDialog, { data })
       .afterClosed()
-      .subscribe((value?: Omit<Position, 'id'>) => value && this.apply(save(value)));
+      .subscribe((result?: PositionDialogResult) => result && this.apply(save(result)));
   }
 
-  private askName(data: NameDialogData, save: (name: string) => Observable<void>): void {
+  private openDepartment(
+    data: { title: string; department?: Department },
+    save: (result: DepartmentDialogResult) => Observable<unknown>,
+  ): void {
     this.dialog
-      .open(NameDialog, { data })
+      .open(DepartmentDialog, { data })
       .afterClosed()
-      .subscribe((name?: string) => name && this.apply(save(name)));
+      .subscribe((result?: DepartmentDialogResult) => result && this.apply(save(result)));
   }
 
-  private confirm(data: ConfirmDialogData, action: () => Observable<void>): void {
-    this.dialog
-      .open(ConfirmDialog, { data })
-      .afterClosed()
-      .subscribe((ok?: boolean) => ok && this.apply(action()));
-  }
-
-  private apply(change: Observable<void>): void {
+  private apply(change: Observable<unknown>): void {
     change.subscribe({
-      next: () => this.snackBar.open('Saved', 'OK', { duration: 2000 }),
-      error: (e: Error) => this.snackBar.open(e.message, 'OK', { duration: 6000 }),
+      next: () => {
+        this.snackBar.open('Saved', 'OK', { duration: 2000 });
+        this.departmentList.reload();
+        this.positionList.reload();
+      },
+      // Duplicate code (409), cycle or unknown reference (400): the server's message is readable.
+      error: (e: unknown) => this.snackBar.open(toApiError(e).message, 'OK', { duration: 8000 }),
     });
   }
 
   private descendants(id: string): string[] {
-    const positions = this.repo.positions();
+    const positions = this.positionList.state().rows;
     const found: string[] = [];
     const walk = (parent: string): void => {
       for (const p of positions) {

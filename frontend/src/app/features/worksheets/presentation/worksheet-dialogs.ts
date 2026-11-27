@@ -319,8 +319,8 @@ export class NewSheetDialog {
       clientId: client.id,
       workTypeKey: this.workTypeKey(),
       period: this.period().trim(),
-      mobile: client.principals[0]?.mobile ?? '',
-      contacts: client.principals.map((p) => ({ name: p.name, phone: p.mobile, email: '' })),
+      mobile: client.directors[0]?.phone ?? '',
+      contacts: client.directors.map((p) => ({ name: p.name, phone: p.phone, email: p.email })),
     });
   }
 }

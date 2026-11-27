@@ -1,0 +1,17 @@
+/// One counter per (tenant, kind). Codes are issued with ONE atomic statement inside the creating
+/// transaction (INSERT .. ON CONFLICT DO UPDATE .. RETURNING), never "count + 1": no race, and a
+/// number is never reused. Kinds: "employee", "client".
+model CodeSequence {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String   @db.Uuid
+  kind      String
+  lastValue Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, kind])
+  @@index([tenantId])
+  @@map("code_sequences")
+}

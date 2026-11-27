@@ -1,8 +1,8 @@
-import { Injectable, inject, isDevMode, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
-import { AppConfig } from './app-config.model';
+import { AppConfig, FEATURES, FeatureKey } from './app-config.model';
 
 /** Runtime configuration loaded from /assets/config.json before the app starts. */
 @Injectable({ providedIn: 'root' })
@@ -23,19 +23,26 @@ export class AppConfigService {
     return value;
   }
 
+  /** Whether `feature` uses the real backend (listed in `realFeatures`). */
+  isReal(feature: FeatureKey): boolean {
+    return this.config.realFeatures.includes(feature);
+  }
+
+  /** Features that still use mock data (shown as a "Mock data" chip in the shell). */
+  get mockFeatures(): FeatureKey[] {
+    return FEATURES.filter((feature) => !this.isReal(feature));
+  }
+
   async load(): Promise<void> {
     const raw = await firstValueFrom(this.http.get<Partial<AppConfig>>('assets/config.json'));
-    // Anything other than an explicit `true` means real (non-mock) mode.
-    const config = { ...raw, mockMode: raw.mockMode === true } as AppConfig;
+    // Unknown names are ignored; anything not listed is a mock feature.
+    const realFeatures = (Array.isArray(raw.realFeatures) ? raw.realFeatures : []).filter(
+      (feature): feature is FeatureKey => (FEATURES as readonly string[]).includes(feature),
+    );
+    const config = { ...raw, realFeatures } as AppConfig;
     this.state.set(config);
     this.title.setTitle(config.branding.productName);
     this.applyBranding(config.branding.cssVariables ?? {});
-
-    if (config.mockMode && !isDevMode()) {
-      console.warn(
-        'mockMode is enabled in a production build. This must never ship to production.',
-      );
-    }
   }
 
   private applyBranding(variables: Record<string, string>): void {

@@ -15,9 +15,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SessionService } from '../../../core/auth/session.service';
 import { AppConfigService } from '../../../core/config/app-config.service';
+import { toApiError } from '../../../core/http/api-error';
 import { formatDateTime } from '../../../shared/utils/date';
 import {
   CREDENTIAL_FIELDS,
@@ -26,13 +28,14 @@ import {
   CredentialKey,
 } from '../domain/client.models';
 import { ClientRepository } from '../domain/client.repository';
+import { PasswordPromptDialog } from './password-prompt-dialog';
 
 /** How long a revealed secret stays on screen before it is masked again. */
 const REVEAL_SECONDS = 30;
 const MASK = '••••••••••';
 
 /**
- * Portal credentials of a CLIENT. Always masked; "Reveal" needs `worksheet.reveal` and every
+ * Portal credentials of a CLIENT. Always masked; "Reveal" needs `clients.reveal_credentials` and every
  * reveal is audited by the repository. A secret is only held in memory while it is shown.
  */
 @Component({
@@ -200,10 +203,11 @@ export class CredentialsCard {
   private readonly repo = inject(ClientRepository);
   private readonly session = inject(SessionService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   private readonly locale = inject(AppConfigService).config.locale.locale;
 
   protected readonly mask = MASK;
-  protected readonly canReveal = this.session.can('worksheet.reveal');
+  protected readonly canReveal = this.session.can('clients.reveal_credentials');
   protected readonly canEdit = computed(() => this.session.can('clients.edit'));
   protected readonly revealed = signal<Partial<Record<CredentialKey, string>>>({});
   protected readonly editing = signal<CredentialKey | null>(null);
@@ -213,7 +217,13 @@ export class CredentialsCard {
   private readonly timers = new Map<CredentialKey, ReturnType<typeof setTimeout>>();
 
   protected readonly groups = computed(() => {
-    const names: CredentialField['group'][] = ['Income Tax', 'GST / KVAT', 'Others'];
+    const names: CredentialField['group'][] = [
+      'MCA',
+      'Income Tax',
+      'GST / KVAT',
+      'PF / ESI',
+      'Others',
+    ];
     return names.map((name) => ({
       name,
       fields: CREDENTIAL_FIELDS.filter((f) => f.group === name),
@@ -247,20 +257,42 @@ export class CredentialsCard {
     return formatDateTime(iso, this.locale);
   }
 
+  /**
+   * Asks for the user's current password first (re-authentication); the server also checks the
+   * permission, rate limits and writes the audit entry. A wrong password or a block is shown as
+   * the server's message. The value is masked again after 30 seconds.
+   */
   protected reveal(field: CredentialField): void {
-    this.repo.revealCredential(this.clientId(), field.key, this.worksheetId()).subscribe({
-      next: (value) => {
-        this.revealed.update((all) => ({ ...all, [field.key]: value }));
-        this.clearTimer(field.key);
-        this.timers.set(
-          field.key,
-          setTimeout(() => this.hide(field.key), REVEAL_SECONDS * 1000),
-        );
-        this.revealedField.emit(`${field.group} ${field.label}`);
-        this.loadAudit();
-      },
-      error: (e: Error) => this.snackBar.open(e.message, 'OK', { duration: 5000 }),
-    });
+    this.dialog
+      .open(PasswordPromptDialog, {
+        data: {
+          title: `Reveal ${field.group} ${field.label}`,
+          message: 'Confirm your password to show this credential. The access is logged.',
+          confirmLabel: 'Reveal',
+        },
+      })
+      .afterClosed()
+      .subscribe((password?: string) => {
+        if (!password) return;
+        this.repo
+          .revealCredential(this.clientId(), field.key, password, this.worksheetId())
+          .subscribe({
+            next: (value) => {
+              this.revealed.update((all) => ({ ...all, [field.key]: value }));
+              this.clearTimer(field.key);
+              this.timers.set(
+                field.key,
+                setTimeout(() => this.hide(field.key), REVEAL_SECONDS * 1000),
+              );
+              this.revealedField.emit(`${field.group} ${field.label}`);
+              this.loadAudit();
+            },
+            error: (e: unknown) => {
+              this.snackBar.open(toApiError(e).message, 'OK', { duration: 7000 });
+              this.loadAudit();
+            },
+          });
+      });
   }
 
   protected hide(key: CredentialKey): void {
@@ -292,13 +324,16 @@ export class CredentialsCard {
         this.changed.emit();
         this.loadAudit();
       },
-      error: (e: Error) => this.snackBar.open(e.message, 'OK', { duration: 5000 }),
+      error: (e: unknown) => this.snackBar.open(toApiError(e).message, 'OK', { duration: 6000 }),
     });
   }
 
   private loadAudit(): void {
     if (!this.canReveal && !this.canEdit()) return;
-    this.repo.credentialAudit(this.clientId()).subscribe((list) => this.audit.set(list));
+    this.repo.credentialAudit(this.clientId()).subscribe({
+      next: (list) => this.audit.set(list),
+      error: () => this.audit.set([]),
+    });
   }
 
   private clearTimer(key: CredentialKey): void {

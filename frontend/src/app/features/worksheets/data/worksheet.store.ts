@@ -1,10 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { DirectoryStore } from '../../../core/mock/directory.store';
+import { Injectable, signal } from '@angular/core';
 import { todayIso } from '../../../shared/utils/date';
 import { WorkSheet } from '../domain/worksheet.models';
-import { buildSeedSheets } from './worksheet.seed';
 
-const STORAGE_KEY = 'acr-demo-worksheets-v2';
+const STORAGE_KEY = 'acr-demo-worksheets-v3';
 
 interface Saved {
   /** Seed dates are relative to "today", so a snapshot from another day is discarded. */
@@ -19,12 +17,11 @@ interface Saved {
  */
 @Injectable({ providedIn: 'root' })
 export class WorksheetStore {
-  private readonly directory = inject(DirectoryStore);
-
   readonly all = signal<WorkSheet[]>([]);
 
   constructor() {
-    this.all.set(this.load() ?? buildSeedSheets(this.directory));
+    // No seeded sheets: clients and staff are real now, so sample sheets would point at nobody.
+    this.all.set(this.load() ?? []);
   }
 
   upsert(sheet: WorkSheet): void {
@@ -47,7 +44,7 @@ export class WorksheetStore {
     } catch {
       // storage unavailable
     }
-    this.all.set(buildSeedSheets(this.directory));
+    this.all.set([]);
   }
 
   private save(): void {

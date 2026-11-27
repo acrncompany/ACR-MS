@@ -52,8 +52,13 @@
 
       <span class="spacer"></span>
 
-      @if (mockMode) {
-        <span class="mock-chip" title="No backend: all data is sample data">Mock data</span>
+      @if (mockFeatures.length) {
+        <span
+          class="mock-chip"
+          [title]="'Sample data (no backend yet): ' + mockFeatures.join(', ')"
+        >
+          Mock data
+        </span>
       }
 
       <button
@@ -85,6 +90,10 @@
         <button mat-menu-item type="button" (click)="signOut()">
           <mat-icon>logout</mat-icon>
           <span>Sign out</span>
+        </button>
+        <button mat-menu-item type="button" (click)="signOutEverywhere()">
+          <mat-icon>devices</mat-icon>
+          <span>Sign out of all devices</span>
         </button>
       </mat-menu>
     </header>

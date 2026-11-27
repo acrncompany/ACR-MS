@@ -12,9 +12,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs';
 import { AppConfigService } from '../config/app-config.service';
 import { homeRoute } from '../auth/auth.guard';
+import { AuthService } from '../auth/auth.service';
 import { SessionService } from '../auth/session.service';
 import { ThemeService } from '../theme/theme.service';
-import { AuthRepository } from '../../features/auth/domain/auth.repository';
 import { NAV_ITEMS } from './nav-items';
 
 @Component({
@@ -37,13 +37,14 @@ import { NAV_ITEMS } from './nav-items';
 })
 export class Shell {
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthRepository);
+  private readonly auth = inject(AuthService);
   private readonly session = inject(SessionService);
   protected readonly theme = inject(ThemeService);
   protected readonly branding = inject(AppConfigService).config.branding;
   protected readonly user = this.session.user;
 
-  protected readonly mockMode = inject(AppConfigService).config.mockMode;
+  /** Features that still use sample data, shown as a chip so nobody mistakes them for real data. */
+  protected readonly mockFeatures = inject(AppConfigService).mockFeatures;
   protected readonly navGroups = computed(() => {
     this.user(); // re-evaluate when the signed-in user changes
     const allowed = NAV_ITEMS.filter((item) => this.session.can(item.permission));
@@ -97,9 +98,10 @@ export class Shell {
   }
 
   protected signOut(): void {
-    this.auth.logout().subscribe(() => {
-      this.session.end();
-      void this.router.navigateByUrl('/login');
-    });
+    this.auth.logout().subscribe({ error: () => undefined });
+  }
+
+  protected signOutEverywhere(): void {
+    this.auth.logoutAll().subscribe({ error: () => undefined });
   }
 }

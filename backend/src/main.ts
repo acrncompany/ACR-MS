@@ -1,8 +1,8 @@
 import 'reflect-metadata';
-import { VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
+import { configureApp } from './app.setup.js';
 import { AppConfig } from './core/config/app-config.js';
 
 async function bootstrap(): Promise<void> {
@@ -11,9 +11,7 @@ async function bootstrap(): Promise<void> {
   const config = app.get(AppConfig);
 
   app.useLogger(app.get(Logger));
-  app.setGlobalPrefix('api');
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-  app.enableCors({ origin: config.get('CORS_ORIGINS') });
+  configureApp(app, config);
   app.enableShutdownHooks();
 
   await app.listen(config.get('PORT'));

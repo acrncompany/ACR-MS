@@ -5,6 +5,7 @@ const valid = {
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
   JWT_SECRET: 'x'.repeat(32),
   TENANT_BASE_DOMAIN: 'localhost',
+  CREDENTIAL_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
   CORS_ORIGINS: 'http://localhost:4200, http://localhost:4300',
 };
 
@@ -36,6 +37,17 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...valid, JWT_SECRET: 'change-me-' + 'x'.repeat(30) })).toThrow(
       /placeholder/,
     );
+  });
+
+  it('rejects a missing or malformed credential master key', () => {
+    const rest: Record<string, string | undefined> = { ...valid };
+    delete rest['CREDENTIAL_MASTER_KEY'];
+    expect(() => parseEnv(rest)).toThrow(/CREDENTIAL_MASTER_KEY/);
+    expect(() => parseEnv({ ...valid, CREDENTIAL_MASTER_KEY: 'short' })).toThrow(/32 random bytes/);
+  });
+
+  it('defaults the credential key id', () => {
+    expect(parseEnv(valid).CREDENTIAL_KEY_ID).toBe('v1');
   });
 
   it('rejects a malformed token lifetime', () => {

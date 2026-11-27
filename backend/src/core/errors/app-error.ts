@@ -28,3 +28,31 @@ export class TenantContextMissingError extends AppError {
     super('TENANT_CONTEXT_MISSING', 'Tenant could not be resolved for this request', 400);
   }
 }
+
+/** 400: well-formed but not acceptable (business validation, as opposed to schema errors). */
+export class ValidationError extends AppError {
+  constructor(message: string, code = 'VALIDATION_FAILED') {
+    super(code, message, 400);
+  }
+}
+
+/** 409: the request conflicts with the current state (e.g. deleting a user who has history). */
+export class ConflictError extends AppError {
+  constructor(message = 'Conflict', code = 'CONFLICT') {
+    super(code, message, 409);
+  }
+}
+
+/** 429: too many attempts; try again later. */
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests. Try again later.') {
+    super('TOO_MANY_REQUESTS', message, 429);
+  }
+}
+
+/** 403: authenticated (or at least well-formed) but not allowed, e.g. a missing CSRF header. */
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden') {
+    super('FORBIDDEN', message, 403);
+  }
+}

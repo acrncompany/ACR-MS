@@ -1,0 +1,24 @@
+model ClientDirector {
+  id        String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String    @db.Uuid
+  clientId  String    @db.Uuid
+  name      String
+  /// Director Identification Number: 8 digits; empty for proprietors and most partners.
+  din       String?
+  phone     String?
+  email     String?
+  kycStatus KycStatus @default(PENDING)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy String?   @db.Uuid
+  updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  client Client @relation(fields: [tenantId, clientId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, clientId])
+  @@map("client_directors")
+}

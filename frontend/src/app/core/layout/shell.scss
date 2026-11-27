@@ -59,7 +59,7 @@ $sidebar-rail: 4.75rem;
 
   &__heading {
     margin: 1.2rem 0.75rem 0.4rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: rgb(255 255 255 / 75%);
     font: var(--mat-sys-label-small);
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -70,7 +70,7 @@ $sidebar-rail: 4.75rem;
   &__divider {
     height: 1px;
     margin: 0.75rem 0.5rem;
-    background: var(--mat-sys-outline-variant);
+    background: rgb(255 255 255 / 25%);
   }
 
   &__link {
@@ -94,7 +94,7 @@ $sidebar-rail: 4.75rem;
     }
 
     &:focus-visible {
-      outline: 2px solid var(--accent);
+      outline: 2px solid #ffffff;
       outline-offset: 1px;
     }
 
@@ -103,10 +103,9 @@ $sidebar-rail: 4.75rem;
       background: var(--sidebar-active);
       color: #ffffff;
       font-weight: 600;
-      box-shadow: 0 4px 10px rgb(6 72 43 / 28%);
 
       mat-icon {
-        color: #6df0a8;
+        color: #ffffff;
       }
     }
 
@@ -160,7 +159,7 @@ $sidebar-rail: 4.75rem;
   text-align: left;
 
   &:hover {
-    background: var(--sidebar-hover);
+    background: color-mix(in srgb, var(--mat-sys-primary-container) 85%, var(--mat-sys-primary));
   }
 
   &__avatar {

@@ -1,20 +1,7 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { AgGridAngular } from 'ag-grid-angular';
-import {
-  ColDef,
-  GetRowIdFunc,
-  GridApi,
-  GridReadyEvent,
-  RowClassParams,
-} from 'ag-grid-community';
+import { ColDef, GetRowIdFunc, GridApi, GridReadyEvent, RowClassParams } from 'ag-grid-community';
 import { appGridTheme } from '../../ag-grid';
 
 /** Most columns a listing shows, so it never needs a horizontal scrollbar. */
@@ -43,9 +30,24 @@ export class PagedGrid {
   /** Rows left after the quick filter, for the page's own counter. */
   readonly matchingChange = output<number>();
 
+  /**
+   * Server mode: `rows` is ONE page the server returned; the grid neither filters nor paginates
+   * by itself. The pager shows `total` and asks the parent for another page (`pageRequest`).
+   */
+  readonly serverMode = input(false);
+  readonly total = input(0);
+  /** 1-based page currently shown (server mode). */
+  readonly serverPage = input(1);
+  readonly serverPageSize = input(25);
+  readonly pageRequest = output<{ page: number; pageSize: number }>();
+
   protected readonly theme = appGridTheme;
   protected readonly defaultColDef: ColDef = { sortable: true, resizable: true };
-  protected readonly sizes = [10, 25, 50, 100, ALL];
+  protected readonly clientSizes = [10, 25, 50, 100, ALL];
+  protected readonly serverSizes = [10, 25, 50, 100];
+  protected readonly sizes = computed(() =>
+    this.serverMode() ? this.serverSizes : this.clientSizes,
+  );
   protected readonly ALL = ALL;
   protected readonly size = signal(25);
   protected readonly page = signal(0);
@@ -67,19 +69,38 @@ export class PagedGrid {
 
   /** "All" is one page holding every row. */
   protected readonly pageSize = computed(() =>
-    this.size() === ALL ? Math.max(this.rows().length, 1) : this.size(),
+    this.serverMode()
+      ? this.serverPageSize()
+      : this.size() === ALL
+        ? Math.max(this.rows().length, 1)
+        : this.size(),
+  );
+  // What the pager shows: the grid's own numbers, or the server's.
+  protected readonly shownSize = computed(() =>
+    this.serverMode() ? this.serverPageSize() : this.size(),
+  );
+  protected readonly shownPage = computed(() =>
+    this.serverMode() ? this.serverPage() - 1 : this.page(),
+  );
+  protected readonly shownPageCount = computed(() =>
+    this.serverMode()
+      ? Math.max(Math.ceil(this.total() / this.serverPageSize()), 1)
+      : this.pageCount(),
+  );
+  protected readonly shownMatching = computed(() =>
+    this.serverMode() ? this.total() : this.matching(),
   );
   protected readonly from = computed(() =>
-    this.matching() ? this.page() * this.pageSize() + 1 : 0,
+    this.shownMatching() ? this.shownPage() * this.pageSize() + 1 : 0,
   );
   protected readonly to = computed(() =>
-    Math.min((this.page() + 1) * this.pageSize(), this.matching()),
+    Math.min((this.shownPage() + 1) * this.pageSize(), this.shownMatching()),
   );
 
   /** First, last and a window around the current page; null is an ellipsis. */
   protected readonly pages = computed<(number | null)[]>(() => {
-    const last = this.pageCount() - 1;
-    const current = this.page();
+    const last = this.shownPageCount() - 1;
+    const current = this.shownPage();
     const keep = [0, last, current - 1, current, current + 1].filter((n) => n >= 0 && n <= last);
     const out: (number | null)[] = [];
     let prev = -1;
@@ -108,10 +129,19 @@ export class PagedGrid {
   }
 
   protected goTo(page: number): void {
+    if (this.serverMode()) {
+      this.pageRequest.emit({ page: page + 1, pageSize: this.serverPageSize() });
+      return;
+    }
     this.api?.paginationGoToPage(page);
   }
 
   protected setSize(value: string): void {
-    this.size.set(Number(value));
+    const size = Number(value);
+    if (this.serverMode()) {
+      this.pageRequest.emit({ page: 1, pageSize: size });
+      return;
+    }
+    this.size.set(size);
   }
 }

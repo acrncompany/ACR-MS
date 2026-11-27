@@ -25,12 +25,16 @@ ModuleRegistry.registerModules([
 /** Colours come from Material tokens through `.app-grid` in styles.scss. */
 export const appGridTheme = themeQuartz.withPart(colorSchemeVariable).withParams({
   fontFamily: 'inherit',
-  wrapperBorderRadius: 12,
-  headerFontWeight: 600,
-  rowHeight: 48,
-  headerHeight: 46,
-  cellHorizontalPadding: 16,
-  borderRadius: 8,
+  wrapperBorderRadius: 0,
+  borderRadius: 0,
+  fontSize: 13,
+  headerFontSize: 12,
+  headerFontWeight: 700,
+  rowHeight: 32,
+  headerHeight: 34,
+  cellHorizontalPadding: 10,
+  columnBorder: true,
+  rowBorder: true,
 });
 
 /** Narrows a plain property name to the field type AG Grid expects for rows of type T. */
@@ -124,6 +128,46 @@ export function statusColumn<T>(field: keyof T & string, headerName = 'Status'):
       chip.className = `status status--${statusTone(p.value)}`;
       chip.textContent = p.value;
       return chip;
+    },
+  };
+}
+
+/** A column of icon buttons (Material Symbols), e.g. a pencil to edit the row. */
+export function iconActionsColumn<T>(
+  actions: {
+    icon: string;
+    title: string;
+    run: (row: T) => void;
+    visible?: (row: T) => boolean;
+  }[],
+): ColDef<T> {
+  return {
+    headerName: 'Action',
+    width: 90,
+    minWidth: 90,
+    maxWidth: 90,
+    sortable: false,
+    resizable: false,
+    cellRenderer: (p: { data?: T }) => {
+      const wrap = document.createElement('span');
+      const row = p.data;
+      if (!row) return wrap;
+      wrap.className = 'grid-actions';
+      for (const action of actions) {
+        if (action.visible && !action.visible(row)) continue;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.title = action.title;
+        button.setAttribute('aria-label', action.title);
+        button.className = 'grid-icon-btn';
+        const glyph = document.createElement('span');
+        glyph.className = 'material-symbols-rounded';
+        glyph.textContent = action.icon;
+        button.appendChild(glyph);
+        button.addEventListener('click', () => action.run(row));
+        wrap.appendChild(button);
+      }
+      return wrap;
     },
   };
 }

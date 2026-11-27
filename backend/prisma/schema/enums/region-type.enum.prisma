@@ -1,0 +1,6 @@
+enum RegionType {
+  STATE
+  PROVINCE
+  EMIRATE
+  TERRITORY
+}

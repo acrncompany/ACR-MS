@@ -21,6 +21,7 @@ export interface SheetRow {
   id: string;
   workNo: string;
   clientName: string;
+  clientCode: string;
   workType: string;
   period: string;
   stageKey: string;
@@ -50,7 +51,7 @@ export class WorksheetContext {
   private readonly clientRepo = inject(ClientRepository);
   readonly locale = inject(AppConfigService).config.locale;
 
-  private readonly clientList = loaded(() => this.clientRepo.list());
+  private readonly clientList = loaded(() => this.clientRepo.listAll());
   readonly clients = this.clientList.rows;
   readonly reloadClients = this.clientList.reload;
   readonly today = todayIso();
@@ -58,12 +59,19 @@ export class WorksheetContext {
   readonly monthPrefix = this.today.slice(0, 7);
 
   private readonly clientNames = computed(() => new Map(this.clients().map((c) => [c.id, c.name])));
+  private readonly clientCodes = computed(
+    () => new Map(this.clients().map((c) => [c.id, c.clientCode])),
+  );
   private readonly typeLabels = computed(
     () => new Map(this.repo.workTypes().map((t) => [t.key, t.label])),
   );
 
   clientName(id: string): string {
     return this.clientNames().get(id) ?? '—';
+  }
+
+  clientCode(id: string): string {
+    return this.clientCodes().get(id) ?? '';
   }
 
   typeLabel(key: string): string {
@@ -100,6 +108,7 @@ export class WorksheetContext {
         id: sheet.id,
         workNo: sheet.workNo,
         clientName: this.clientName(sheet.clientId),
+        clientCode: this.clientCode(sheet.clientId),
         workType: this.typeLabel(sheet.workTypeKey),
         period: sheet.period,
         stageKey: sheet.stage,

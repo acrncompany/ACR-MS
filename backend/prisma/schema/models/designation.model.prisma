@@ -1,0 +1,26 @@
+/// Designation (Employees > Designations). Belongs to one department. Independent of the
+/// organisation hierarchy. `code` (DSG-0001...) is permanent: issued once, never reused.
+model Designation {
+  id           String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId     String    @db.Uuid
+  code         String
+  name         String
+  departmentId String    @db.Uuid
+  description  String    @default("")
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy    String?   @db.Uuid
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt    DateTime? @db.Timestamptz(3)
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  department Department @relation(fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  employees  Employee[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@unique([tenantId, departmentId, name], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([tenantId, departmentId])
+  @@map("designations")
+}

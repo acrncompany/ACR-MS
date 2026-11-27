@@ -1,10 +1,10 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { DirectoryStore } from '../../../core/mock/directory.store';
+import { Injectable, signal } from '@angular/core';
 import { addDays, todayIso } from '../../../shared/utils/date';
 import { AttendanceRecord, Employee, LeaveRequest } from '../domain/hr.models';
 
 /** Staff who are not system users (articled assistants, interns, office support). */
-const EXTRA_STAFF: { name: string; designation: string; department: string; location: string }[] = [];
+const EXTRA_STAFF: { name: string; designation: string; department: string; location: string }[] =
+  [];
 
 interface LeaveSeed {
   employee: string;
@@ -20,7 +20,6 @@ const LEAVE_SEEDS: LeaveSeed[] = [];
 /** Mock HR state shared across the HR pages; leave decisions persist until reload. */
 @Injectable({ providedIn: 'root' })
 export class HrStore {
-  private readonly directory = inject(DirectoryStore);
   private readonly today = todayIso();
   private readonly leave = signal<LeaveRequest[]>(
     LEAVE_SEEDS.map((l, i) => ({
@@ -51,18 +50,16 @@ export class HrStore {
         )
         .map((l) => l.employee),
     );
-    const fromUsers = this.directory.users().map((u, i) => {
-      const position = this.directory.position(u.positionId);
-      return {
-        name: u.name,
-        designation: position?.title ?? '',
-        department: this.directory.department(position?.departmentId ?? '')?.name ?? '',
-        location: 'Chennai',
-        email: u.email,
-        active: u.active,
-        index: i,
-      };
-    });
+    // Staff are real users now (Users page); this sample HR module has no people of its own yet.
+    const fromUsers: {
+      name: string;
+      designation: string;
+      department: string;
+      location: string;
+      email: string;
+      active: boolean;
+      index: number;
+    }[] = [];
     const extras = EXTRA_STAFF.map((s, i) => ({
       ...s,
       email: `${s.name.split(' ')[0].toLowerCase()}@acr.demo`,

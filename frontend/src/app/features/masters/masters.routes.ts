@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
-import { permissionGuard } from '../../core/auth/auth.guard';
 import { CLIENTS_ROUTES } from '../clients/clients.routes';
+import { ORGANISATION_TYPES_ROUTES } from '../organisation-types/organisation-types.routes';
+import { WORKS_ROUTES } from '../works/works.routes';
 
 export const MASTERS_ROUTES: Routes = [
   {
@@ -9,12 +10,8 @@ export const MASTERS_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'clients' },
       { path: 'clients', children: CLIENTS_ROUTES },
-      {
-        path: 'works',
-        canActivate: [permissionGuard],
-        data: { permission: 'clients.view' },
-        loadComponent: () => import('./presentation/works-page').then((m) => m.WorksPage),
-      },
+      { path: 'works', children: WORKS_ROUTES },
+      { path: 'organisations', children: ORGANISATION_TYPES_ROUTES },
     ],
   },
 ];

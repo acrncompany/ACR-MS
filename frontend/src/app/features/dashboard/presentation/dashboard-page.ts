@@ -14,13 +14,7 @@ import { WorksheetWidgets } from '../../worksheets/presentation/worksheet-widget
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [
-    AgGridAngular,
-    KpiCard,
-    MatCardModule,
-    WorksheetInbox,
-    WorksheetWidgets,
-  ],
+  imports: [AgGridAngular, KpiCard, MatCardModule, WorksheetInbox, WorksheetWidgets],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

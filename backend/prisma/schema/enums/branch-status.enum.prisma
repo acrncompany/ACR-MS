@@ -1,0 +1,4 @@
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+}

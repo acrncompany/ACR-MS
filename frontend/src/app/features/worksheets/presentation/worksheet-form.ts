@@ -44,7 +44,10 @@ export class WorksheetForm {
   readonly credentialRevealed = output<string>();
 
   protected readonly clientOptions = computed<WsOption[]>(() =>
-    this.clients().map((c) => ({ value: c.id, label: c.name })),
+    this.clients()
+      // Deactivated clients are not offered for new work, but stay visible on their old sheets.
+      .filter((c) => c.active || c.id === this.draft().clientId)
+      .map((c) => ({ value: c.id, label: `${c.clientCode} · ${c.name}` })),
   );
   protected readonly typeOptions = computed<WsOption[]>(() =>
     this.workTypes().map((t) => ({ value: t.key, label: t.label })),

@@ -13,7 +13,25 @@ export const HR_ROUTES: Routes = [
       {
         path: 'employees',
         ...guard,
-        loadComponent: () => import('./presentation/hr-pages').then((m) => m.EmployeesPage),
+        loadComponent: () => import('./presentation/people-hub-page').then((m) => m.PeopleHubPage),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./presentation/people-pages').then((m) => m.PeopleEmployeesPage),
+          },
+          {
+            path: 'designations',
+            loadComponent: () =>
+              import('./presentation/people-pages').then((m) => m.PeopleDesignationsPage),
+          },
+          {
+            path: 'departments',
+            loadComponent: () =>
+              import('./presentation/people-pages').then((m) => m.PeopleDepartmentsPage),
+          },
+        ],
       },
       {
         path: 'attendance',

@@ -11,6 +11,7 @@
   </header>
   <div class="grid">
     <app-ws-text label="Work no" [value]="s.workNo" [readonly]="true" />
+    <app-ws-text label="Client code" [value]="client()?.clientCode ?? ''" [readonly]="true" />
     <app-ws-text
       label="Received date"
       type="date"
@@ -82,8 +83,12 @@
   @if (client(); as c) {
     <dl class="facts">
       <div>
-        <dt>Constitution</dt>
-        <dd>{{ c.constitution }}</dd>
+        <dt>Client code</dt>
+        <dd>{{ c.clientCode }}</dd>
+      </div>
+      <div>
+        <dt>Organisation type</dt>
+        <dd>{{ c.organisationTypeLabel }}</dd>
       </div>
       <div>
         <dt>PAN</dt>
@@ -104,8 +109,8 @@
       <div class="wide">
         <dt>Proprietor / partners / directors</dt>
         <dd>
-          @for (p of c.principals; track p.name) {
-            <span class="person">{{ p.name }} ({{ p.designation }}) · {{ p.mobile }}</span>
+          @for (p of c.directors; track p.id) {
+            <span class="person">{{ p.name }} · {{ p.phone }}</span>
           }
         </dd>
       </div>

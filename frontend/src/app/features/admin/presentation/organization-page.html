@@ -1,14 +1,19 @@
-<app-page-header
-  title="Organization"
->
+<app-page-header title="Organization">
   @if (canCreate) {
     <button mat-flat-button type="button" (click)="addPosition(null)">
       <mat-icon>add</mat-icon>
       Add position
     </button>
   }
-  <app-reset-demo-button />
 </app-page-header>
+
+@if (error(); as message) {
+  <p class="banner banner--error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="banner" role="status">Loading…</p>
+} @else if (!roots().length) {
+  <p class="banner" role="status">No positions yet. Add the first position to start the chart.</p>
+}
 
 <div class="layout">
   <mat-card appearance="outlined" class="tree-card">
@@ -58,16 +63,20 @@
                     <mat-icon>drive_file_move</mat-icon>
                     <span>Move</span>
                   </button>
-                  <button mat-menu-item type="button" (click)="removePosition(node.position)">
-                    <mat-icon>delete</mat-icon>
-                    <span>Remove</span>
-                  </button>
                 }
               </mat-menu>
             }
           </div>
           <span class="tags">
             <span class="tag tag--dept">{{ node.department }}</span>
+            @if (node.position.code) {
+              <span class="tag tag--code" title="Role code">{{ node.position.code }}</span>
+            }
+            @if (node.position.designationCode) {
+              <span class="tag tag--code" title="Designation label (display only)">{{
+                node.position.designationCode
+              }}</span>
+            }
           </span>
         </div>
         @if (node.children.length) {
@@ -93,24 +102,21 @@
     <ul class="depts">
       @for (department of departments(); track department.id) {
         <li>
-          <span>{{ department.name }}</span>
+          <span>
+            {{ department.name }}
+            @if (department.code) {
+              <span class="dept-code">{{ department.code }}</span>
+            }
+          </span>
           @if (canEdit) {
             <span class="depts__actions">
               <button
                 mat-icon-button
                 type="button"
-                aria-label="Rename department"
-                (click)="renameDepartment(department.id, department.name)"
+                aria-label="Edit department"
+                (click)="editDepartment(department)"
               >
                 <mat-icon>edit</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                type="button"
-                aria-label="Remove department"
-                (click)="removeDepartment(department.id, department.name)"
-              >
-                <mat-icon>delete</mat-icon>
               </button>
             </span>
           }

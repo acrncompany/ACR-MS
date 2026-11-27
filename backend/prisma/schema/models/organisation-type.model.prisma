@@ -1,0 +1,24 @@
+/// Organisation type master (Individual, Proprietorship, ...), per tenant. Feeds the client
+/// form's "Organisation type" dropdown. `code` (ORG-0001...) is permanent: issued once, never
+/// reused, never typed in. `label` is the name shown to users; `key` is derived from it.
+model OrganisationType {
+  id        String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String    @db.Uuid
+  code      String
+  key       String
+  label     String
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy String?   @db.Uuid
+  updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  clients Client[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, code])
+  @@unique([tenantId, key], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@map("organisation_types")
+}

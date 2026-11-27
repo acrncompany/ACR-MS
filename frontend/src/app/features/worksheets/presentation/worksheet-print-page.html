@@ -18,6 +18,8 @@
       <tr>
         <th>Work no</th>
         <td>{{ s.workNo }}</td>
+        <th>Client code</th>
+        <td>{{ client()?.clientCode }}</td>
         <th>Received date</th>
         <td>{{ date(s.receivedDate) }}</td>
         <th>Work assign date</th>
@@ -50,8 +52,8 @@
       <tr>
         <th>Name</th>
         <td colspan="3">{{ ctx.clientName(s.clientId) }}</td>
-        <th>Constitution</th>
-        <td>{{ client()?.constitution }}</td>
+        <th>Organisation type</th>
+        <td>{{ client()?.organisationTypeLabel }}</td>
       </tr>
       <tr>
         <th>Address</th>
@@ -62,8 +64,8 @@
       <tr>
         <th>Proprietor / partners / directors</th>
         <td colspan="3">
-          @for (p of client()?.principals ?? []; track p.name) {
-            <div>{{ p.name }} ({{ p.designation }}) {{ p.mobile }}</div>
+          @for (p of client()?.directors ?? []; track p.id) {
+            <div>{{ p.name }} {{ p.phone }}</div>
           }
         </td>
         <th>Previous auditor</th>

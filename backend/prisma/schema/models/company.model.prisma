@@ -1,0 +1,30 @@
+/// Legal entity of a tenant, one per country / registration.
+model Company {
+  id                   String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId             String    @db.Uuid
+  name                 String
+  countryId            String    @db.Uuid
+  baseCurrencyCode     String    @db.Char(3)
+  /// e.g. { "PAN": "...", "GSTIN": "..." } or { "TRN": "..." }
+  taxIds               Json      @default("{}")
+  /// 1-12 (CHECK constraint)
+  fiscalYearStartMonth Int       @db.SmallInt
+  /// IANA zone
+  timezone             String
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy            String?   @db.Uuid
+  updatedAt            DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt            DateTime? @db.Timestamptz(3)
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  country      Country  @relation(fields: [countryId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  baseCurrency Currency @relation(fields: [baseCurrencyCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  branches     Branch[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([countryId])
+  @@index([baseCurrencyCode])
+  @@map("companies")
+}

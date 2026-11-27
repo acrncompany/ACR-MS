@@ -1,0 +1,18 @@
+/// Join table (client <-> law): hard delete; every change is covered by the client's audit row.
+model ClientLaw {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId  String   @db.Uuid
+  clientId  String   @db.Uuid
+  lawId     String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdBy String?  @db.Uuid
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  client Client        @relation(fields: [tenantId, clientId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  law    ComplianceLaw @relation(fields: [tenantId, lawId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, clientId, lawId])
+  @@index([tenantId])
+  @@index([tenantId, lawId])
+  @@map("client_laws")
+}

@@ -70,6 +70,7 @@ export class SheetGrid {
     const today = this.today();
     return [
       { field: 'workNo', headerName: 'Work No', minWidth: 130, flex: 1, sort: 'desc' },
+      { field: 'clientCode', headerName: 'Client code', minWidth: 120, flex: 1 },
       { field: 'clientName', headerName: 'Client', minWidth: 200, flex: 2 },
       { field: 'workType', headerName: 'Work', minWidth: 150, flex: 1.2 },
       { field: 'period', headerName: 'Period', minWidth: 120, flex: 1 },

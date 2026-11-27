@@ -1,0 +1,43 @@
+/// Client master. `clientCode` is permanent: unique per tenant WITHOUT a partial index, so a code
+/// stays reserved even after a soft delete. Clients are deactivated (`active`), never deleted.
+model Client {
+  id                 String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId           String    @db.Uuid
+  branchId           String    @db.Uuid
+  clientCode         String
+  name               String
+  address            String
+  city               String?
+  email              String?
+  phone              String?
+  organisationTypeId String    @db.Uuid
+  pan                String
+  gstin              String?
+  /// Company Identification Number, LLPIN or ICAI Firm Registration Number.
+  cinFrn             String?
+  incorporationDate  DateTime? @db.Date
+  previousAuditor    String?
+  active             Boolean   @default(true)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy          String?   @db.Uuid
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  updatedBy          String?   @db.Uuid
+  deletedAt          DateTime? @db.Timestamptz(3)
+
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  branch           Branch             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  organisationType OrganisationType   @relation(fields: [tenantId, organisationTypeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  directors        ClientDirector[]
+  laws             ClientLaw[]
+  team             ClientTeamMember[]
+  credentials      ClientCredential[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, clientCode])
+  @@unique([tenantId, pan], where: raw("\"deletedAt\" IS NULL"))
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, organisationTypeId])
+  @@index([tenantId, active])
+  @@map("clients")
+}

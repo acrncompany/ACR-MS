@@ -8,5 +8,10 @@ import { worksheetsProviders } from '../worksheets/worksheets.providers';
 export const dashboardProviders: Provider[] = [
   // The work sheet widgets read the work sheet repository.
   ...worksheetsProviders,
-  provideRepository(DashboardRepository, MockDashboardRepository, ApiDashboardRepository),
+  provideRepository(
+    DashboardRepository,
+    'dashboard',
+    MockDashboardRepository,
+    ApiDashboardRepository,
+  ),
 ];

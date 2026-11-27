@@ -1,8 +1,7 @@
-export interface TokenClaims {
-  userId: string;
-  tenantId: string;
-}
+import { AuthIdentity } from './auth.types.js';
 
 export abstract class TokenIssuer {
-  abstract issue(claims: TokenClaims): Promise<string>;
+  abstract issue(identity: AuthIdentity): Promise<string>;
+  /** Returns the identity inside a valid, unexpired token, or null for anything else. */
+  abstract verify(token: string): Promise<AuthIdentity | null>;
 }

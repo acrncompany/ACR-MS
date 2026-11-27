@@ -1,6 +1,10 @@
-<app-page-header [title]="title()">
-  <ng-content select="[actions]" />
-</app-page-header>
+<ng-template #actionsTpl><ng-content select="[actions]" /></ng-template>
+
+@if (title()) {
+  <app-page-header [title]="title()">
+    <ng-container [ngTemplateOutlet]="actionsTpl" />
+  </app-page-header>
+}
 
 @if (summary().length) {
   <section class="summary">
@@ -18,14 +22,44 @@
 }
 
 <div class="toolbar">
-  <app-filter-search [(value)]="search" />
-  <span class="count">{{ matching() }} of {{ rows().length }} records</span>
+  <div class="toolbar__filters">
+    <app-filter-search [(value)]="search" [placeholder]="searchPlaceholder()" />
+    <ng-content select="[filters]" />
+  </div>
+  <div class="toolbar__end">
+    @if (title()) {
+      <span class="count">
+        @if (loading()) {
+          Loading…
+        } @else if (serverSide()) {
+          {{ total() }} {{ total() === 1 ? 'record' : 'records' }}
+        } @else {
+          {{ matching() }} of {{ rows().length }} records
+        }
+      </span>
+    } @else {
+      <ng-container [ngTemplateOutlet]="actionsTpl" />
+    }
+  </div>
 </div>
+
+@if (errorMessage(); as message) {
+  <p class="state state--error" role="alert">{{ message }}</p>
+} @else if (!loading() && serverSide() && total() === 0) {
+  <p class="state" role="status">
+    {{ search() ? 'No records match your search.' : 'There are no records yet.' }}
+  </p>
+}
 
 <app-paged-grid
   [rows]="rows()"
   [columns]="columns()"
   [quickFilter]="search()"
+  [serverMode]="serverSide()"
+  [total]="total()"
+  [serverPage]="page()"
+  [serverPageSize]="pageSize()"
+  (pageRequest)="onPage($event)"
   (matchingChange)="matching.set($event)"
   (rowClick)="rowClick.emit($event)"
 />

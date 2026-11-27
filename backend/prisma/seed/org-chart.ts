@@ -1,161 +1,109 @@
+import {
+  PERMISSIONS,
+  STANDARD_ACTIONS,
+} from '../../src/modules/access/domain/permission-catalogue.js';
+
 /**
- * Permission catalogue and the default ACR org chart (dev seed).
+ * Default ACR roles and org chart (dev seed). The permission catalogue lives in the backend
+ * access module.
  * Hierarchy: Board > General Manager > { Operations Manager > Finance Officer (Team Lead) >
  * Finance Executive (Team Member); HR; BDE; Customer Care; Finance / Accounting }.
  */
 
-const WORKSHEET_ACTIONS = [
-  'create',
-  'assign',
-  'plan',
-  'allocate',
-  'execute',
-  'finalize',
-  'document',
-  'approve',
-  'deliver',
-  'reassign',
-  'retarget',
-  'reveal',
-] as const;
+export { PERMISSIONS };
 
-export const PERMISSIONS: { key: string; module: string; description: string }[] = [
-  ...WORKSHEET_ACTIONS.map((action) => ({
-    key: `worksheet.${action}`,
-    module: 'worksheet',
-    description:
-      action === 'reveal'
-        ? 'Reveal a client portal credential (audited)'
-        : `Work sheet stage action: ${action}`,
-  })),
-  { key: 'user.read', module: 'user', description: 'View users' },
-  {
-    key: 'user.create',
-    module: 'user',
-    description: 'Create users in the position directly below',
-  },
-  { key: 'user.update', module: 'user', description: 'Edit users below in the hierarchy' },
-  {
-    key: 'user.deactivate',
-    module: 'user',
-    description: 'Deactivate users below in the hierarchy',
-  },
-  { key: 'position.read', module: 'position', description: 'View positions' },
-  { key: 'position.create', module: 'position', description: 'Create positions' },
-  { key: 'position.update', module: 'position', description: 'Edit positions' },
-  {
-    key: 'position.move',
-    module: 'position',
-    description: 'Move people between positions (Board)',
-  },
-  { key: 'role.read', module: 'role', description: 'View roles and the permission matrix' },
-  { key: 'role.manage', module: 'role', description: 'Create and edit roles and permissions' },
-  { key: 'branch.read', module: 'branch', description: 'View branches' },
-  { key: 'branch.manage', module: 'branch', description: 'Create and edit branches' },
-  { key: 'company.read', module: 'company', description: 'View companies' },
-  { key: 'company.manage', module: 'company', description: 'Create and edit companies' },
-  { key: 'settings.read', module: 'settings', description: 'View tenant settings' },
-  { key: 'settings.manage', module: 'settings', description: 'Change tenant settings' },
-  { key: 'audit.read', module: 'audit', description: 'View the audit log' },
-];
+type Grants = Record<string, readonly string[]>;
 
-const any =
-  (...keys: string[]) =>
-  (key: string) =>
-    keys.includes(key);
+const ALL_STANDARD = STANDARD_ACTIONS;
+const keysOf = (grants: Grants): Set<string> =>
+  new Set(
+    Object.entries(grants).flatMap(([module, actions]) =>
+      actions.map((action) => `${module}.${action}`),
+    ),
+  );
 
+const BOARD = new Set(PERMISSIONS.map((p) => p.key));
+
+/** Mirrors the frontend's default role matrix; the backend catalogue stays the source of truth. */
 export const ROLES: {
   key: string;
   name: string;
   description: string;
-  permissions: (key: string) => boolean;
+  permissions: ReadonlySet<string>;
 }[] = [
-  { key: 'board', name: 'Board', description: 'Full access', permissions: () => true },
+  { key: 'board', name: 'Board', description: 'Full access', permissions: BOARD },
   {
     key: 'general_manager',
     name: 'General Manager',
     description: 'Everything except moving people between positions',
-    permissions: (key) => key !== 'position.move',
+    permissions: keysOf({
+      dashboard: ['view'],
+      clients: ['view', 'create', 'edit', 'deactivate'],
+      hr: ['view'],
+      users: ['view', 'create', 'edit', 'deactivate'],
+      worksheet: ['view', 'assign', 'approve', 'reassign', 'retarget'],
+      audit: ['view'],
+    }),
   },
   {
     key: 'operations_manager',
     name: 'Operations Manager',
     description: 'All operations work sheets',
-    permissions: (key) =>
-      key.startsWith('worksheet.') ||
-      any(
-        'user.read',
-        'user.create',
-        'user.update',
-        'position.read',
-        'branch.read',
-        'company.read',
-        'audit.read',
-      )(key),
+    permissions: keysOf({
+      dashboard: ['view'],
+      clients: ['view', 'create', 'edit', 'deactivate', 'reveal_credentials'],
+      users: ['view', 'create', 'edit', 'deactivate'],
+      worksheet: ['view', 'plan', 'approve', 'reassign', 'retarget'],
+    }),
   },
   {
     key: 'finance_officer',
     name: 'Finance Officer (Team Lead)',
     description: 'Own and team work sheets',
-    permissions: any(
-      'worksheet.create',
-      'worksheet.assign',
-      'worksheet.plan',
-      'worksheet.allocate',
-      'worksheet.execute',
-      'worksheet.finalize',
-      'worksheet.document',
-      'worksheet.approve',
-      'worksheet.reassign',
-      'worksheet.reveal',
-      'user.read',
-      'user.create',
-      'position.read',
-    ),
+    permissions: keysOf({
+      dashboard: ['view'],
+      clients: ['view', 'reveal_credentials'],
+      users: ['view', 'create', 'edit', 'deactivate'],
+      worksheet: ['view', 'allocate', 'finalize', 'document', 'reassign'],
+    }),
   },
   {
     key: 'finance_executive',
     name: 'Finance Executive (Team Member)',
     description: 'Executes assigned work sheets',
-    permissions: any(
-      'worksheet.plan',
-      'worksheet.execute',
-      'worksheet.document',
-      'worksheet.reveal',
-    ),
+    permissions: keysOf({
+      dashboard: ['view'],
+      clients: ['view', 'reveal_credentials'],
+      worksheet: ['view', 'execute'],
+    }),
   },
   {
     key: 'hr',
     name: 'HR',
     description: 'People administration',
-    permissions: any(
-      'user.read',
-      'user.create',
-      'user.update',
-      'user.deactivate',
-      'position.read',
-      'position.create',
-      'position.update',
-      'audit.read',
-    ),
+    permissions: keysOf({ dashboard: ['view'], hr: ALL_STANDARD }),
   },
   {
     key: 'bde',
     name: 'BDE',
     description: 'Business development',
-    permissions: any('worksheet.create'),
+    permissions: keysOf({ dashboard: ['view'], clients: ['view'] }),
   },
   {
     key: 'customer_care',
     name: 'Customer Care',
     description: 'Client intake and delivery',
-    permissions: any('worksheet.create', 'worksheet.deliver'),
+    permissions: keysOf({ dashboard: ['view'], clients: ['view'] }),
   },
   {
     key: 'finance_accounting',
     name: 'Finance / Accounting',
     description: 'Intake and delivery stages',
-    permissions: any('worksheet.create', 'worksheet.deliver', 'company.read'),
+    permissions: keysOf({
+      dashboard: ['view'],
+      clients: ['view', 'edit'],
+      worksheet: ['view', 'create', 'deliver'],
+    }),
   },
 ];
 
@@ -176,6 +124,8 @@ export const POSITIONS: {
   department: string;
   role: string;
   parent?: string;
+  /** The CEO's short display label. Only the ones he confirmed are set; the rest stay null. */
+  designationCode?: string;
   seesAll?: boolean;
   allBranches?: boolean;
 }[] = [
@@ -193,6 +143,9 @@ export const POSITIONS: {
     department: 'MGMT',
     role: 'general_manager',
     parent: 'BOARD',
+    designationCode: 'GM',
+    // Board and GM see every record (the reporting line limits everyone else).
+    seesAll: true,
     allBranches: true,
   },
   {
@@ -208,6 +161,7 @@ export const POSITIONS: {
     department: 'OPS',
     role: 'finance_officer',
     parent: 'OPS_MGR',
+    designationCode: 'TL',
   },
   {
     code: 'FIN_EXEC',
@@ -215,6 +169,7 @@ export const POSITIONS: {
     department: 'OPS',
     role: 'finance_executive',
     parent: 'FIN_OFFICER',
+    designationCode: 'TM',
   },
   { code: 'HR', name: 'HR', department: 'HR', role: 'hr', parent: 'GM' },
   { code: 'BDE', name: 'BDE', department: 'BD', role: 'bde', parent: 'GM' },
@@ -233,3 +188,32 @@ export const POSITIONS: {
     parent: 'GM',
   },
 ];
+
+/** Data-driven lookups for client masters (per tenant). The CEO's short forms stay AS-IS. */
+export const ORGANISATION_TYPES: { key: string; label: string }[] = [
+  { key: 'individual', label: 'Individual' },
+  { key: 'proprietorship', label: 'Proprietorship' },
+  { key: 'partnership', label: 'Partnership' },
+  { key: 'llp', label: 'LLP' },
+  { key: 'pvt-co', label: 'Pvt Co' },
+  { key: 'pub-co', label: 'Pub Co' },
+  { key: 'listed-co', label: 'Listed Co' },
+  { key: 'trust', label: 'Trust' },
+  { key: 'society', label: 'Society' },
+  { key: 'others', label: 'Others' },
+];
+
+export const COMPLIANCE_LAWS: { key: string; label: string }[] = [
+  'MCA',
+  'TDS',
+  'GST',
+  'PF',
+  'ESI',
+  'LLP',
+  'FORM-11',
+  'FORM-8',
+  'MGT',
+  'KYC',
+  'GSTR-1',
+  'GSTR-3B',
+].map((key) => ({ key, label: key }));

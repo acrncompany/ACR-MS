@@ -1,24 +1,12 @@
 import { SessionUser } from '../../../core/auth/session.service';
-import { DirectoryStore } from '../../../core/mock/directory.store';
 import { Actor } from '../domain/worksheet.models';
 
-/** The workflow engine's view of a directory user (used by the seed data). */
-export function actorFor(directory: DirectoryStore, userId: string): Actor {
-  const user = directory.user(userId);
-  const role = user ? directory.roleOfUser(user) : undefined;
-  return {
-    id: userId,
-    name: user?.name ?? '—',
-    role: role?.name ?? '',
-    roleId: role?.id ?? '',
-    seesAll: role?.seesAll ?? false,
-    permissions: role ? directory.permissionsOf(role.id) : [],
-    subtree: directory.subtreeUserIds(userId),
-  };
-}
-
-/** The signed-in user's actor. Permissions come from the session, as everywhere in the UI. */
-export function actorFromSession(user: SessionUser, directory: DirectoryStore): Actor {
+/**
+ * The signed-in user's actor for the (mock) workflow engine. Permissions come from the session,
+ * as everywhere in the UI. The mock knows no reporting lines (staff live in the real backend), so
+ * the visible subtree is just the user; Board and GM (`seesAll`) still see everything.
+ */
+export function actorFromSession(user: SessionUser): Actor {
   return {
     id: user.id,
     name: user.name,
@@ -26,6 +14,6 @@ export function actorFromSession(user: SessionUser, directory: DirectoryStore): 
     roleId: user.roleId,
     seesAll: user.seesAll,
     permissions: user.permissions,
-    subtree: directory.subtreeUserIds(user.id),
+    subtree: new Set([user.id]),
   };
 }

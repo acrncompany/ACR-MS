@@ -1,6 +1,6 @@
 @if (sheet(); as s) {
   @let r = row();
-  <app-page-header [title]="s.workNo">
+  <app-page-header [title]="s.workNo" [badge]="r?.clientCode ?? ''">
     <a mat-stroked-button routerLink="/worksheets/list">
       <mat-icon>arrow_back</mat-icon> All sheets
     </a>

@@ -1,7 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, defer, map, of, throwError } from 'rxjs';
 import { SessionService } from '../../../core/auth/session.service';
-import { DirectoryStore } from '../../../core/mock/directory.store';
 import { todayIso } from '../../../shared/utils/date';
 import { ClientRepository } from '../../clients/domain/client.repository';
 import { recurringPeriod } from '../domain/period';
@@ -53,7 +52,6 @@ function fail<T>(message: string): Observable<T> {
 export class MockWorksheetRepository extends WorksheetRepository {
   private readonly store = inject(WorksheetStore);
   private readonly session = inject(SessionService);
-  private readonly directory = inject(DirectoryStore);
   private readonly clients = inject(ClientRepository);
 
   override readonly workflow = signal(WORKFLOW_CONFIG).asReadonly();
@@ -62,7 +60,7 @@ export class MockWorksheetRepository extends WorksheetRepository {
 
   override readonly actor = computed<Actor | null>(() => {
     const user = this.session.user();
-    return user ? actorFromSession(user, this.directory) : null;
+    return user ? actorFromSession(user) : null;
   });
 
   override readonly sheets = computed(() => {
@@ -72,22 +70,16 @@ export class MockWorksheetRepository extends WorksheetRepository {
   });
 
   nameOf(userId: string | null): string {
-    return userId ? this.directory.userName(userId) : '—';
+    // Only the signed-in user can be named: the mock has no staff directory.
+    const me = this.session.user();
+    return userId && me?.id === userId ? me.name : '—';
   }
 
+  /** No candidates: assignment needs the real staff directory, which this mock does not have. */
+  // The slot is part of the repository contract; this mock has no candidates for any slot.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   assignees(slot: AssigneeSlot): Assignee[] {
-    const actor = this.actor();
-    const def = WORKFLOW_CONFIG.slots.find((s) => s.slot === slot);
-    if (!actor || !def) return [];
-    return this.directory
-      .users()
-      .filter(
-        (u) =>
-          u.active &&
-          this.directory.roleOfUser(u)?.id === def.roleId &&
-          (actor.seesAll || actor.subtree.has(u.id)),
-      )
-      .map((u) => ({ id: u.id, name: u.name }));
+    return [];
   }
 
   create(input: NewWorksheetInput): Observable<WorkSheet> {
@@ -201,7 +193,8 @@ export class MockWorksheetRepository extends WorksheetRepository {
       const actor = this.actor();
       const current = this.find(id);
       if (!actor || !current) return fail<void>('Work sheet not found.');
-      if (!actor.permissions.includes('worksheet.reveal')) return fail<void>('Not allowed.');
+      if (!actor.permissions.includes('clients.reveal_credentials'))
+        return fail<void>('Not allowed.');
       const sheet = structuredClone(current);
       sheet.history.push(
         historyEntry(newEntryId(), actor, new Date().toISOString(), {
@@ -222,7 +215,7 @@ export class MockWorksheetRepository extends WorksheetRepository {
       if (!actor?.permissions.includes('worksheet.create')) {
         return fail<GenerateResult>('You are not allowed to create work sheets.');
       }
-      return this.clients.list().pipe(
+      return this.clients.listAll().pipe(
         map((clients) => {
           const today = todayIso();
           const existing = new Set(
@@ -233,7 +226,8 @@ export class MockWorksheetRepository extends WorksheetRepository {
           );
           const created: WorkSheet[] = [];
           let skipped = 0;
-          for (const client of clients) {
+          // Deactivated clients get no new recurring sheets.
+          for (const client of clients.filter((c) => c.active)) {
             for (const rule of client.recurring) {
               const period = recurringPeriod(rule.frequency, today);
               if (!period) continue;
@@ -249,11 +243,11 @@ export class MockWorksheetRepository extends WorksheetRepository {
                     clientId: client.id,
                     workTypeKey: rule.workTypeKey,
                     period,
-                    mobile: client.principals[0]?.mobile ?? '',
-                    contacts: client.principals.map((p) => ({
+                    mobile: client.directors[0]?.phone ?? '',
+                    contacts: client.directors.map((p) => ({
                       name: p.name,
-                      phone: p.mobile,
-                      email: '',
+                      phone: p.phone,
+                      email: p.email,
                     })),
                   },
                   actor,

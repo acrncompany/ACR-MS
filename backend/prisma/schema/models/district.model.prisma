@@ -1,0 +1,15 @@
+// Global reference data: no tenantId and no RLS; the runtime role acrms_app can only SELECT it.
+model District {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  regionId  String   @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  region   Region   @relation(fields: [regionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  cities   City[]
+  branches Branch[]
+
+  @@unique([regionId, name])
+  @@map("districts")
+}

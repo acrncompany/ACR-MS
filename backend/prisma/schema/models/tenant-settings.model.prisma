@@ -1,0 +1,20 @@
+/// 1:1 with tenants.
+model TenantSettings {
+  id                 String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId           String    @unique @db.Uuid
+  /// null = no idle logout
+  idleTimeoutMinutes Int?
+  sessionMaxDays     Int       @default(30)
+  refreshTokenDays   Int       @default(7)
+  branding           Json      @default("{}")
+  /// BCP 47, e.g. en-IN
+  defaultLocale      String    @default("en")
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy          String?   @db.Uuid
+  updatedAt          DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt          DateTime? @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("tenant_settings")
+}

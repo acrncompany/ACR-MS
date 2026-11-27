@@ -34,10 +34,7 @@ import { FilterSelect } from '../../../shared/components/filter-select/filter-se
     FilterSelect,
   ],
   template: `
-    <app-page-header
-      title="Work sheets"
-     
-    >
+    <app-page-header title="Work sheets">
       @if (canCreate) {
         <button mat-flat-button type="button" (click)="create()">
           <mat-icon>add</mat-icon>
@@ -70,33 +67,33 @@ import { FilterSelect } from '../../../shared/components/filter-select/filter-se
     </section>
 
     <div class="filter-bar">
-        <app-filter-search placeholder="Search sheets" [(value)]="search" />
-        <app-filter-select label="Stage" [options]="stageOptions()" [(value)]="stage" />
-        <app-filter-select label="Work type" [options]="typeOptions()" [(value)]="type" />
-        <app-filter-select label="Client" [options]="clientOptions()" [(value)]="client" />
-        <app-filter-select label="Assignee" [options]="assigneeOptions()" [(value)]="assignee" />
-        <app-filter-select label="Period" [options]="periodOptions()" [(value)]="period" />
-        <button
-          type="button"
-          class="filter-pill"
-          [attr.aria-pressed]="onlyOverdue()"
-          (click)="onlyOverdue.set(!onlyOverdue())"
-        >
-          <mat-icon>warning</mat-icon> Overdue
-        </button>
-        @if (filtering()) {
-          <button mat-button type="button" (click)="clear()">Clear</button>
-        }
-      </div>
-      <p class="count">{{ filtered().length }} of {{ rows().length }} sheets</p>
-      <app-sheet-grid
-        [paged]="true"
-        [rows]="filtered()"
-        [quickFilter]="search()"
-        [today]="ctx.today"
-        [locale]="ctx.locale.locale"
-        (open)="open($event)"
-      />
+      <app-filter-search placeholder="Search sheets" [(value)]="search" />
+      <app-filter-select label="Stage" [options]="stageOptions()" [(value)]="stage" />
+      <app-filter-select label="Work type" [options]="typeOptions()" [(value)]="type" />
+      <app-filter-select label="Client" [options]="clientOptions()" [(value)]="client" />
+      <app-filter-select label="Assignee" [options]="assigneeOptions()" [(value)]="assignee" />
+      <app-filter-select label="Period" [options]="periodOptions()" [(value)]="period" />
+      <button
+        type="button"
+        class="filter-pill"
+        [attr.aria-pressed]="onlyOverdue()"
+        (click)="onlyOverdue.set(!onlyOverdue())"
+      >
+        <mat-icon>warning</mat-icon> Overdue
+      </button>
+      @if (filtering()) {
+        <button mat-button type="button" (click)="clear()">Clear</button>
+      }
+    </div>
+    <p class="count">{{ filtered().length }} of {{ rows().length }} sheets</p>
+    <app-sheet-grid
+      [paged]="true"
+      [rows]="filtered()"
+      [quickFilter]="search()"
+      [today]="ctx.today"
+      [locale]="ctx.locale.locale"
+      (open)="open($event)"
+    />
   `,
   styles: `
     :host {

@@ -11,70 +11,14 @@ import {
 } from '../../../shared/ag-grid';
 import { DataPage, SummaryItem } from '../../../shared/components/data-page/data-page';
 import { loaded } from '../../../shared/utils/loaded';
-import { AttendanceRecord, Employee, LeaveRequest } from '../domain/hr.models';
+import { AttendanceRecord, LeaveRequest } from '../domain/hr.models';
 import { HrRepository } from '../domain/hr.repository';
-
-@Component({
-  selector: 'app-employees-page',
-  imports: [DataPage],
-  template: `
-    <app-data-page
-      title="Employees"
-      [summary]="summary()"
-      [columns]="columns"
-      [rows]="rows()"
-    />
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class EmployeesPage {
-  private readonly locale = inject(AppConfigService).config.locale.locale;
-  protected readonly rows = loaded(() => inject(HrRepository).employees()).rows;
-
-  protected readonly columns: ColDef<Employee>[] = [
-    textColumn<Employee>('code', 'Code'),
-    { ...textColumn<Employee>('name', 'Name', 2), minWidth: 160 },
-    { ...textColumn<Employee>('designation', 'Designation', 2), minWidth: 200 },
-    { ...textColumn<Employee>('department', 'Department', 2), minWidth: 150 },
-    textColumn<Employee>('location', 'Location'),
-    dateColumn<Employee>('joinDate', 'Joined', this.locale),
-    statusColumn<Employee>('status'),
-  ];
-
-  protected readonly summary = computed<SummaryItem[]>(() => {
-    const rows = this.rows();
-    return [
-      {
-        label: 'Headcount',
-        value: String(rows.filter((e) => e.status !== 'Inactive').length),
-        icon: 'groups',
-      },
-      {
-        label: 'On leave today',
-        value: String(rows.filter((e) => e.status === 'On leave').length),
-        icon: 'beach_access',
-        tone: 'amber',
-      },
-      {
-        label: 'Departments',
-        value: String(new Set(rows.map((e) => e.department)).size),
-        icon: 'account_tree',
-        tone: 'blue',
-      },
-    ];
-  });
-}
 
 @Component({
   selector: 'app-attendance-page',
   imports: [DataPage],
   template: `
-    <app-data-page
-      title="Attendance"
-      [summary]="summary()"
-      [columns]="columns"
-      [rows]="rows()"
-    />
+    <app-data-page title="Attendance" [summary]="summary()" [columns]="columns" [rows]="rows()" />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
