@@ -5,12 +5,19 @@ import { PeopleRepository } from './domain/people.repository.js';
 import {
   CreateHrDepartmentUseCase,
   CreateHrDesignationUseCase,
-  CreateHrEmployeeUseCase,
+  CreateHrPersonUseCase,
+  DeleteHrPersonUseCase,
+  GetHrAdditionalDocumentUseCase,
+  GetHrDocumentUseCase,
+  GetHrPersonUseCase,
   ListHrDepartmentsUseCase,
   ListHrDesignationsUseCase,
-  ListHrEmployeesUseCase,
   ListHrOptionsUseCase,
+  ListHrPeopleUseCase,
   PeekHrCodeUseCase,
+  UpdateHrPersonUseCase,
+  UploadHrAdditionalDocumentUseCase,
+  UploadHrDocumentUseCase,
 } from './domain/people.use-cases.js';
 import { PeopleController } from './presentation/people.controller.js';
 
@@ -21,12 +28,19 @@ import { PeopleController } from './presentation/people.controller.js';
     { provide: PeopleRepository, useClass: PrismaPeopleRepository },
     ListHrDepartmentsUseCase,
     ListHrDesignationsUseCase,
-    ListHrEmployeesUseCase,
+    ListHrPeopleUseCase,
+    GetHrPersonUseCase,
     ListHrOptionsUseCase,
     PeekHrCodeUseCase,
     CreateHrDepartmentUseCase,
     CreateHrDesignationUseCase,
-    CreateHrEmployeeUseCase,
+    CreateHrPersonUseCase,
+    UpdateHrPersonUseCase,
+    DeleteHrPersonUseCase,
+    UploadHrDocumentUseCase,
+    GetHrDocumentUseCase,
+    UploadHrAdditionalDocumentUseCase,
+    GetHrAdditionalDocumentUseCase,
   ],
 })
 export class PeopleModule {}

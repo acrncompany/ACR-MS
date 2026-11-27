@@ -35,6 +35,8 @@ model Tenant {
   departments       Department[]
   designations      Designation[]
   employees         Employee[]
+  articles          Article[]
+  personDocuments   PersonDocument[]
 
   @@map("tenants")
 }

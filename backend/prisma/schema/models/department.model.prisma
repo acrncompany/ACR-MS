@@ -17,6 +17,7 @@ model Department {
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   designations Designation[]
   employees    Employee[]
+  articles     Article[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, code])

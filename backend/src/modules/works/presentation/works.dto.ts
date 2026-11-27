@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
 /** The code and key are server-made: unknown keys (code, key, tenantId...) are rejected. */
-export const createWorkSchema = z
-  .object({ name: z.string().trim().min(1).max(100) })
-  .strict();
+export const createWorkSchema = z.object({ name: z.string().trim().min(1).max(100) }).strict();
 
 /** Only the name can change: the code is permanent and the key stays stable for the clients. */
 export const updateWorkSchema = createWorkSchema;

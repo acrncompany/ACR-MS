@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotFoundError, ValidationError } from '../../../core/errors/app-error.js';
 import type { Actor } from '../../access/domain/actor.js';
-import {
-  WorkPage,
-  WorkQuery,
-  WorkRecord,
-} from './work.records.js';
+import { WorkPage, WorkQuery, WorkRecord } from './work.records.js';
 import { WorksRepository } from './works.repository.js';
 
 /** "TDS Returns" becomes "tds-returns": lower case words joined by "-". */
@@ -57,11 +53,7 @@ export class CreateWorkUseCase {
 export class UpdateWorkUseCase {
   constructor(private readonly types: WorksRepository) {}
 
-  async execute(
-    actor: Actor,
-    id: string,
-    input: { name: string },
-  ): Promise<WorkRecord> {
+  async execute(actor: Actor, id: string, input: { name: string }): Promise<WorkRecord> {
     // The key (slug) is never re-derived: clients keep pointing at the same work after a rename.
     if (!slugify(input.name)) {
       throw new ValidationError('The name needs letters or numbers', 'VALIDATION_ERROR');

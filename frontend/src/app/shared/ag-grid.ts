@@ -136,6 +136,10 @@ export function statusColumn<T>(field: keyof T & string, headerName = 'Status'):
 export function iconActionsColumn<T>(
   actions: {
     icon: string;
+    /** When set, shown instead of the Material icon. */
+    emoji?: string;
+    /** Draws the button in the theme's error (red) colour; works with the icon, not the emoji. */
+    danger?: boolean;
     title: string;
     run: (row: T) => void;
     visible?: (row: T) => boolean;
@@ -159,12 +163,20 @@ export function iconActionsColumn<T>(
         button.type = 'button';
         button.title = action.title;
         button.setAttribute('aria-label', action.title);
-        button.className = 'grid-icon-btn';
+        button.className = action.danger ? 'grid-icon-btn grid-icon-btn--danger' : 'grid-icon-btn';
         const glyph = document.createElement('span');
-        glyph.className = 'material-symbols-rounded';
-        glyph.textContent = action.icon;
+        if (action.emoji) {
+          glyph.textContent = action.emoji;
+        } else {
+          glyph.className = 'material-symbols-rounded';
+          glyph.textContent = action.icon;
+        }
         button.appendChild(glyph);
-        button.addEventListener('click', () => action.run(row));
+        button.addEventListener('click', (event) => {
+          // The button's own action: never also open the row.
+          event.stopPropagation();
+          action.run(row);
+        });
         wrap.appendChild(button);
       }
       return wrap;

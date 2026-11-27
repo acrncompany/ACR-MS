@@ -12,6 +12,8 @@ export function configureApp(app: INestApplication, config: AppConfig): void {
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.use(cookieParser());
+  // Uploads are sent as the raw file body (Content-Type: application/octet-stream), max 2 MB.
+  express.useBodyParser('raw', { type: 'application/octet-stream', limit: '2mb' });
   // The refresh cookie only works with credentialed CORS, which needs explicit origins.
   app.enableCors({
     origin: config.get('CORS_ORIGINS'),

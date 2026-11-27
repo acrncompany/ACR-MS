@@ -93,9 +93,7 @@ export class ListAssignableStaffUseCase {
     private readonly scope: StaffScope,
   ) {}
 
-  async execute(
-    actor: Actor,
-  ): Promise<
+  async execute(actor: Actor): Promise<
     {
       id: string;
       name: string;

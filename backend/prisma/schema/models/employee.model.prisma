@@ -1,29 +1,67 @@
-/// Employee (Employees). Optionally has a department and a designation. Independent of staff
-/// accounts (`users`). `code` (HRE-0001...) is permanent: issued once, never reused.
+/// Employee (People > Employees). Optionally has a department, a designation and a reporting
+/// manager (another employee). Independent of staff accounts (`users`). `code` (ACR-0001..., shared with articles) is
+/// permanent: issued once, never reused.
 model Employee {
-  id            String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  tenantId      String    @db.Uuid
-  code          String
-  name          String
-  email         String    @default("")
-  phone         String    @default("")
-  departmentId  String?   @db.Uuid
-  designationId String?   @db.Uuid
-  dateOfJoining DateTime  @db.Date
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
-  createdBy     String?   @db.Uuid
-  updatedAt     DateTime  @default(now()) @updatedAt @db.Timestamptz(3)
-  deletedAt     DateTime? @db.Timestamptz(3)
+  id                       String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId                 String         @db.Uuid
+  code                     String
+  firstName                String
+  lastName                 String         @default("")
+  email                    String         @default("")
+  mobNo                    String         @default("")
+  departmentId             String?        @db.Uuid
+  designationId            String?        @db.Uuid
+  dateOfJoining            DateTime       @db.Date
+  active                   Boolean        @default(true)
+  dateOfBirth              DateTime?      @db.Date
+  gender                   Gender?
+  maritalStatus            MaritalStatus?
+  // Address
+  houseName                String         @default("")
+  postOffice               String         @default("")
+  district                 String         @default("")
+  pinCode                  String         @default("")
+  state                    String         @default("")
+  // Emergency contact
+  emergencyContactName     String         @default("")
+  emergencyContactRelation String         @default("")
+  emergencyMobNo           String         @default("")
+  // Documents: only the storage KEY is stored (never a URL), plus the original name and type.
+  idProofType              IdProofType?
+  idProofFileKey           String?
+  idProofFileName          String?
+  idProofFileMime          String?
+  resumeFileKey            String?
+  resumeFileName           String?
+  resumeFileMime           String?
+  // Bank details
+  bankAccountHolder        String         @default("")
+  bankName                 String         @default("")
+  bankAccountNumber        String         @default("")
+  bankIfsc                 String         @default("")
+  bankBranch               String         @default("")
+  passbookFileKey          String?
+  passbookFileName         String?
+  passbookFileMime         String?
+  reportingManagerId       String?        @db.Uuid
+  createdAt                DateTime       @default(now()) @db.Timestamptz(3)
+  createdBy                String?        @db.Uuid
+  updatedAt                DateTime       @default(now()) @updatedAt @db.Timestamptz(3)
+  deletedAt                DateTime?      @db.Timestamptz(3)
 
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  department  Department?  @relation(fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
-  designation Designation? @relation(fields: [tenantId, designationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  tenant              Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  department          Department?      @relation(fields: [tenantId, departmentId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  designation         Designation?     @relation(fields: [tenantId, designationId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  reportingManager    Employee?        @relation("EmployeeReporting", fields: [tenantId, reportingManagerId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  directReports       Employee[]       @relation("EmployeeReporting")
+  managedArticles     Article[]        @relation("ArticleReporting")
+  additionalDocuments PersonDocument[] @relation("EmployeeDocuments")
 
   @@unique([tenantId, id])
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, departmentId])
   @@index([tenantId, designationId])
+  @@index([tenantId, reportingManagerId])
   @@map("employees")
 }
