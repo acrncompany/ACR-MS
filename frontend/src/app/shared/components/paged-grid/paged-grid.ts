@@ -26,6 +26,8 @@ export class PagedGrid {
   readonly quickFilter = input('');
   readonly getRowId = input<GetRowIdFunc>();
   readonly getRowClass = input<(params: RowClassParams) => string | undefined>();
+  /** Rows open something on click: shows a pointer cursor and a small zoom on hover. */
+  readonly clickableRows = input(false);
   readonly rowClick = output<unknown>();
   /** Rows left after the quick filter, for the page's own counter. */
   readonly matchingChange = output<number>();

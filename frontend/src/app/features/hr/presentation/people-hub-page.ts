@@ -1,27 +1,27 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 
 interface PeopleTab {
   label: string;
   route: string;
+  /** Route prefixes (create, detail pages) that keep this tab highlighted. */
+  alsoUnder?: string[];
 }
 
-/** Employees hub: same top bar as Masters; each item is a child route. */
+/** People hub: same top bar as Masters; each item is a child route. */
 @Component({
   selector: 'app-people-hub-page',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterOutlet],
   template: `
     <div class="bar">
-      <h1 class="title">Employees</h1>
-      <nav class="tabs" aria-label="Employees">
+      <h1 class="title">People</h1>
+      <nav class="tabs" aria-label="People">
         @for (tab of tabs; track tab.route) {
-          <a
-            class="item"
-            [routerLink]="tab.route"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            >{{ tab.label }}</a
-          >
+          <a class="item" [routerLink]="tab.route" [class.active]="isActive(tab)">{{
+            tab.label
+          }}</a>
         }
       </nav>
     </div>
@@ -95,9 +95,34 @@ interface PeopleTab {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PeopleHubPage {
+  private readonly router = inject(Router);
+
+  /** Current URL without query/fragment; updates after every navigation. */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.currentPath()),
+    ),
+    { initialValue: this.currentPath() },
+  );
+
   protected readonly tabs: PeopleTab[] = [
-    { label: 'Employees', route: '/hr/employees' },
-    { label: 'Designations', route: '/hr/employees/designations' },
-    { label: 'Departments', route: '/hr/employees/departments' },
+    { label: 'Employees', route: '/hr/people', alsoUnder: ['/hr/people/employees'] },
+    { label: 'Articles', route: '/hr/people/articles', alsoUnder: ['/hr/people/articles'] },
+    { label: 'Designations', route: '/hr/people/designations' },
+    { label: 'Departments', route: '/hr/people/departments' },
   ];
+
+  /** A tab is active on its own route, and on the create/detail pages that belong to it. */
+  protected isActive(tab: PeopleTab): boolean {
+    const url = this.url();
+    return (
+      url === tab.route ||
+      (tab.alsoUnder ?? []).some((prefix) => url === prefix || url.startsWith(`${prefix}/`))
+    );
+  }
+
+  private currentPath(): string {
+    return this.router.url.split(/[?#]/)[0];
+  }
 }

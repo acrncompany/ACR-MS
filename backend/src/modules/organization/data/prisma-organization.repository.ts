@@ -170,7 +170,10 @@ export class PrismaOrganizationRepository extends OrganizationRepository {
           where: { id, deletedAt: null },
           data: { ...rest, parentPositionId: parentId },
         });
-        const row = await tx.orgPosition.findFirstOrThrow({ where: { id }, select: POSITION_SELECT });
+        const row = await tx.orgPosition.findFirstOrThrow({
+          where: { id },
+          select: POSITION_SELECT,
+        });
         await this.audit.executeIn(tx, { ...audit, entity: 'position', entityId: id });
         return toPosition(row);
       });

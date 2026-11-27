@@ -3,12 +3,7 @@ import { issueCode, peekNextCode } from '../../../core/codes/code-sequence.js';
 import { mapIntegrityError } from '../../../core/database/db-errors.js';
 import { PrismaService } from '../../../core/database/prisma.service.js';
 import { RecordAuditUseCase } from '../../audit/domain/record-audit.use-case.js';
-import {
-  WorkAuditSpec,
-  WorkPage,
-  WorkQuery,
-  WorkRecord,
-} from '../domain/work.records.js';
+import { WorkAuditSpec, WorkPage, WorkQuery, WorkRecord } from '../domain/work.records.js';
 import { WorksRepository } from '../domain/works.repository.js';
 
 const SELECT = { id: true, code: true, label: true } as const;
@@ -57,11 +52,7 @@ export class PrismaWorksRepository extends WorksRepository {
     return this.prisma.tx((tx) => peekNextCode(tx, 'work'));
   }
 
-  async create(
-    name: string,
-    key: string,
-    audit: WorkAuditSpec,
-  ): Promise<WorkRecord> {
+  async create(name: string, key: string, audit: WorkAuditSpec): Promise<WorkRecord> {
     try {
       return await this.prisma.tx(async (tx) => {
         // The code is issued INSIDE this transaction: one atomic increment, never count + 1.
@@ -86,11 +77,7 @@ export class PrismaWorksRepository extends WorksRepository {
     }
   }
 
-  async rename(
-    id: string,
-    name: string,
-    audit: WorkAuditSpec,
-  ): Promise<WorkRecord | null> {
+  async rename(id: string, name: string, audit: WorkAuditSpec): Promise<WorkRecord | null> {
     try {
       return await this.prisma.tx(async (tx) => {
         const current = await tx.complianceLaw.findFirst({

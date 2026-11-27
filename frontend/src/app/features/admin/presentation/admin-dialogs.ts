@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { dateToIso, isoToDate, provideDayFirstDatepicker } from '../../../shared/utils/date-picker';
 import {
   AssignableStaff,
@@ -19,6 +20,9 @@ import {
 } from '../domain/admin.models';
 import { DepartmentInput, PositionInput } from '../domain/organization.repository';
 import { StaffRepository } from '../domain/staff.repository';
+
+export { ConfirmDialog };
+export type { ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
 
 /** Capital letters in groups joined by "_" or "-"; no digits, so a code never carries a level. */
 const CODE = /^[A-Z]+([_-][A-Z]+)*$/;
@@ -33,31 +37,6 @@ const DESIGNATIONS = [
   { code: 'GM', label: 'General Manager' },
   { code: 'P1', label: 'Partner' },
 ] as const;
-
-export interface ConfirmDialogData {
-  title: string;
-  message: string;
-  confirmLabel: string;
-}
-
-@Component({
-  selector: 'app-confirm-dialog',
-  imports: [MatButtonModule, MatDialogModule],
-  template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>{{ data.message }}</mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Cancel</button>
-      <button mat-flat-button type="button" [mat-dialog-close]="true" cdkFocusInitial>
-        {{ data.confirmLabel }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ConfirmDialog {
-  protected readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
-}
 
 /** Position label with the CEO's display code, e.g. "Finance Officer (TL)". */
 export function positionLabel(p: Pick<Position, 'title' | 'designationCode'>): string {

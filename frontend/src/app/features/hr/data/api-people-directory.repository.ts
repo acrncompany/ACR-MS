@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { AppConfigService } from '../../../core/config/app-config.service';
@@ -10,8 +10,13 @@ import {
   DesignationInput,
   DirectoryKind,
   DirectoryOption,
-  EmployeeEntry,
-  EmployeeInput,
+  AdditionalDocument,
+  DocumentInfo,
+  DocumentKind,
+  PersonDetail,
+  PersonEntry,
+  PersonInput,
+  PersonKind,
 } from '../domain/people-directory.models';
 import { PeopleDirectoryRepository } from '../domain/people-directory.repository';
 
@@ -19,6 +24,7 @@ const PATHS: Record<DirectoryKind, string> = {
   department: 'departments',
   designation: 'designations',
   employee: 'employees',
+  article: 'articles',
 };
 
 @Injectable()
@@ -44,8 +50,12 @@ export class ApiPeopleDirectoryRepository extends PeopleDirectoryRepository {
     return this.page('designation', query);
   }
 
-  employees(query: PageQuery): Observable<Page<EmployeeEntry>> {
-    return this.page('employee', query);
+  people(kind: PersonKind, query: PageQuery): Observable<Page<PersonEntry>> {
+    return this.page(kind, query);
+  }
+
+  person(kind: PersonKind, id: string): Observable<PersonDetail> {
+    return this.http.get<PersonDetail>(`${this.base}/${PATHS[kind]}/${id}`);
   }
 
   departmentOptions(): Observable<DirectoryOption[]> {
@@ -54,6 +64,10 @@ export class ApiPeopleDirectoryRepository extends PeopleDirectoryRepository {
 
   designationOptions(): Observable<DirectoryOption[]> {
     return this.http.get<DirectoryOption[]>(`${this.base}/designations/options`);
+  }
+
+  employeeOptions(): Observable<DirectoryOption[]> {
+    return this.http.get<DirectoryOption[]>(`${this.base}/employees/options`);
   }
 
   nextCode(kind: DirectoryKind): Observable<string> {
@@ -70,7 +84,59 @@ export class ApiPeopleDirectoryRepository extends PeopleDirectoryRepository {
     return this.http.post<DesignationEntry>(`${this.base}/designations`, input);
   }
 
-  createEmployee(input: EmployeeInput): Observable<EmployeeEntry> {
-    return this.http.post<EmployeeEntry>(`${this.base}/employees`, input);
+  createPerson(kind: PersonKind, input: PersonInput): Observable<PersonDetail> {
+    return this.http.post<PersonDetail>(`${this.base}/${PATHS[kind]}`, input);
+  }
+
+  updatePerson(kind: PersonKind, id: string, input: PersonInput): Observable<PersonDetail> {
+    return this.http.put<PersonDetail>(`${this.base}/${PATHS[kind]}/${id}`, input);
+  }
+
+  deletePerson(kind: PersonKind, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${PATHS[kind]}/${id}`);
+  }
+
+  uploadDocument(
+    kind: PersonKind,
+    id: string,
+    document: DocumentKind,
+    file: File,
+  ): Observable<DocumentInfo> {
+    // The file is the raw request body; its original name travels in the query string.
+    return this.http.post<DocumentInfo>(
+      `${this.base}/${PATHS[kind]}/${id}/documents/${document}`,
+      file,
+      {
+        params: new HttpParams().set('fileName', file.name),
+        headers: new HttpHeaders({ 'Content-Type': 'application/octet-stream' }),
+      },
+    );
+  }
+
+  document(kind: PersonKind, id: string, document: DocumentKind): Observable<Blob> {
+    return this.http.get(`${this.base}/${PATHS[kind]}/${id}/documents/${document}`, {
+      responseType: 'blob',
+    });
+  }
+
+  uploadAdditionalDocument(
+    kind: PersonKind,
+    id: string,
+    file: File,
+    title: string,
+  ): Observable<AdditionalDocument> {
+    let params = new HttpParams().set('fileName', file.name);
+    if (title.trim()) params = params.set('title', title.trim());
+    return this.http.post<AdditionalDocument>(
+      `${this.base}/${PATHS[kind]}/${id}/additional-documents`,
+      file,
+      { params, headers: new HttpHeaders({ 'Content-Type': 'application/octet-stream' }) },
+    );
+  }
+
+  additionalDocument(kind: PersonKind, id: string, documentId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${PATHS[kind]}/${id}/additional-documents/${documentId}`, {
+      responseType: 'blob',
+    });
   }
 }

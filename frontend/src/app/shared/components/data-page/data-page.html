@@ -45,7 +45,7 @@
 
 @if (errorMessage(); as message) {
   <p class="state state--error" role="alert">{{ message }}</p>
-} @else if (!loading() && serverSide() && total() === 0) {
+} @else if (!loading() && serverSide() && total() === 0 && (showEmptyMessage() || search())) {
   <p class="state" role="status">
     {{ search() ? 'No records match your search.' : 'There are no records yet.' }}
   </p>
@@ -61,6 +61,7 @@
   [serverPageSize]="pageSize()"
   (pageRequest)="onPage($event)"
   (matchingChange)="matching.set($event)"
+  [clickableRows]="clickableRows()"
   (rowClick)="rowClick.emit($event)"
 />
 

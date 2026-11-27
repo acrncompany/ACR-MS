@@ -174,23 +174,29 @@ describe('HR directory', () => {
 
   it('creates employees; the department follows the designation', async () => {
     const res = await api('post', '/hr/employees', board, {
-      name: 'Asha Verma',
+      firstName: 'Asha',
+      lastName: 'Verma',
       email: 'Asha@Example.com',
-      phone: '9847012345',
+      mobNo: '9847012345',
       designationId,
       joinDate: '2026-04-01',
     });
     expect(res.status).toBe(201);
-    expect(res.body.code).toMatch(/^HRE-\d{4}$/);
+    expect(res.body.code).toMatch(/^[A-Z0-9]+-\d{4}$/);
+    expect(res.body.firstName).toBe('Asha');
+    expect(res.body.lastName).toBe('Verma');
+    expect(res.body.name).toBe('Asha Verma');
     expect(res.body.email).toBe('asha@example.com');
     expect(res.body.departmentId).toBe(departmentId);
     expect(res.body.designationName).toBe('Accountant');
     expect(res.body.joinDate).toBe('2026-04-01');
     const bare = await api('post', '/hr/employees', board, {
-      name: 'No Links',
+      firstName: 'No Links',
       joinDate: '2026-05-02',
     });
     expect(bare.status).toBe(201);
+    expect(bare.body.lastName).toBe('');
+    expect(bare.body.name).toBe('No Links');
     expect(bare.body.departmentId).toBeNull();
     expect(bare.body.designationId).toBeNull();
   });
@@ -198,7 +204,7 @@ describe('HR directory', () => {
   it('rejects an employee whose designation is in another department or has a bad date', async () => {
     const dept2 = await api('post', '/hr/departments', board, { name: 'Payroll' });
     const mismatch = await api('post', '/hr/employees', board, {
-      name: 'Mismatch',
+      firstName: 'Mismatch',
       departmentId: dept2.body.id,
       designationId,
       joinDate: '2026-04-01',
@@ -206,12 +212,12 @@ describe('HR directory', () => {
     expect(mismatch.status).toBe(400);
     expect(mismatch.body.code ?? mismatch.body.error?.code).toBe('DESIGNATION_DEPARTMENT_MISMATCH');
     expect(
-      (await api('post', '/hr/employees', board, { name: 'D', joinDate: '01/04/2026' })).status,
+      (await api('post', '/hr/employees', board, { firstName: 'D', joinDate: '01/04/2026' })).status,
     ).toBe(400);
     expect(
       (
         await api('post', '/hr/employees', board, {
-          name: 'E',
+          firstName: 'E',
           email: 'nope',
           joinDate: '2026-04-01',
         })

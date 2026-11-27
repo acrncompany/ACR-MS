@@ -183,6 +183,31 @@ mat-card.mat-mdc-card {
   --ag-header-column-resize-handle-color: rgb(0 0 0 / 20%);
 }
 
+// Listings whose rows open a page: pointer cursor and a small zoom on hover. `scale` is its own
+// property, so it does not fight the row's `transform` that AG Grid uses to position it.
+.app-grid--clickable .ag-row {
+  cursor: pointer;
+  transition:
+    scale 120ms ease,
+    box-shadow 120ms ease;
+
+  &:hover {
+    z-index: 2;
+    scale: 1.01;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-grid--clickable .ag-row {
+    transition: none;
+
+    &:hover {
+      scale: none;
+    }
+  }
+}
+
 // Compact filter bars: small pills with a chevron (<app-filter-select>, <app-filter-search>).
 .filter-bar {
   display: flex;
@@ -307,6 +332,12 @@ mat-card.mat-mdc-card {
     background: transparent;
     color: var(--mat-sys-primary);
   }
+
+  // After :hover so it wins: stays red at rest and on hover.
+  &.grid-icon-btn--danger,
+  &.grid-icon-btn--danger:hover {
+    color: var(--mat-sys-error);
+  }
 }
 
 // Dialogs (new / edit modals): square corners, a dark compact header with a close button, and a
@@ -315,6 +346,11 @@ mat-card.mat-mdc-card {
   --mat-dialog-container-shape: 0;
   --mat-dialog-container-min-width: 30rem;
   --mat-dialog-container-max-width: 92vw;
+}
+
+// A dialog that is shown full screen (the document viewer) is not held to the 92vw limit.
+.dialog-maximized {
+  --mat-dialog-container-max-width: 100vw;
 }
 
 .mat-mdc-dialog-surface {

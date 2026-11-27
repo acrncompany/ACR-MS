@@ -1,0 +1,256 @@
+<app-page-header [title]="(editing ? 'Edit ' : 'New ') + labels.singular" [badge]="code() ?? ''">
+  <a mat-stroked-button [routerLink]="cancelLink"> <mat-icon>arrow_back</mat-icon> Cancel </a>
+  <button mat-flat-button type="submit" form="person-form" [disabled]="saving()">
+    <mat-icon>save</mat-icon> Save
+  </button>
+</app-page-header>
+
+@if (serverError(); as message) {
+  <div class="problems" role="alert">
+    <strong>The server could not save this {{ labels.singular }}:</strong> {{ message }}
+  </div>
+}
+
+@if (editing) {
+  <p class="hint">Documents are added or replaced on the {{ labels.singular }}'s own page.</p>
+}
+
+<form id="person-form" class="form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <mat-card appearance="outlined" class="card">
+    <h2>Basic details</h2>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>First name</mat-label>
+        <input matInput formControlName="firstName" maxlength="100" autocomplete="off" />
+        @if (form.controls.firstName.invalid) {
+          <mat-error>First name is required</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Last name</mat-label>
+        <input matInput formControlName="lastName" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" maxlength="200" autocomplete="off" />
+        @if (form.controls.email.invalid) {
+          <mat-error>Enter a valid email</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Mob No.</mat-label>
+        <input matInput formControlName="mobNo" maxlength="20" autocomplete="off" />
+        @if (form.controls.mobNo.invalid) {
+          <mat-error>Enter a valid mobile number</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Date of joining</mat-label>
+        <input matInput [matDatepicker]="joining" formControlName="joinDate" />
+        <mat-hint>dd/MM/yyyy</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="joining" />
+        <mat-datepicker #joining />
+        @if (form.controls.joinDate.invalid) {
+          <mat-error>Enter a valid date as dd/MM/yyyy</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Department</mat-label>
+        <mat-select formControlName="departmentId">
+          <mat-option value="">None</mat-option>
+          @for (d of departments(); track d.id) {
+            <mat-option [value]="d.id">{{ d.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Designation</mat-label>
+        <mat-select formControlName="designationId">
+          <mat-option value="">None</mat-option>
+          @for (d of designations(); track d.id) {
+            <mat-option [value]="d.id">{{ d.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Reporting manager</mat-label>
+        <mat-select formControlName="reportingManagerId">
+          <mat-option value="">None</mat-option>
+          @for (m of managerChoices(); track m.id) {
+            <mat-option [value]="m.id">{{ m.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          @for (s of statuses; track s) {
+            <mat-option [value]="s">{{ s }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="card">
+    <h2>Personal details</h2>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Date of birth</mat-label>
+        <input matInput [matDatepicker]="birth" formControlName="dateOfBirth" />
+        <mat-hint>dd/MM/yyyy</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="birth" />
+        <mat-datepicker #birth />
+        @if (form.controls.dateOfBirth.invalid) {
+          <mat-error>Enter a valid date as dd/MM/yyyy</mat-error>
+        }
+      </mat-form-field>
+      <div class="choice" role="group" aria-labelledby="gender-label">
+        <span class="choice-label" id="gender-label">Gender</span>
+        <mat-radio-group formControlName="gender" aria-labelledby="gender-label">
+          @for (g of genders; track g[0]) {
+            <mat-radio-button [value]="g[0]">{{ g[1] }}</mat-radio-button>
+          }
+        </mat-radio-group>
+      </div>
+      <div class="choice" role="group" aria-labelledby="marital-label">
+        <span class="choice-label" id="marital-label">Marital status</span>
+        <mat-radio-group formControlName="maritalStatus" aria-labelledby="marital-label">
+          @for (m of maritalStatuses; track m[0]) {
+            <mat-radio-button [value]="m[0]">{{ m[1] }}</mat-radio-button>
+          }
+        </mat-radio-group>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="card">
+    <h2>Address</h2>
+    <div class="grid">
+      <mat-form-field appearance="outline" class="span-2">
+        <mat-label>House name</mat-label>
+        <input matInput formControlName="houseName" maxlength="150" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Post office</mat-label>
+        <input matInput formControlName="postOffice" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>District</mat-label>
+        <input matInput formControlName="district" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Pin code</mat-label>
+        <input matInput formControlName="pinCode" maxlength="10" autocomplete="off" />
+        @if (form.controls.pinCode.invalid) {
+          <mat-error>Digits only</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>State</mat-label>
+        <input matInput formControlName="state" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+    </div>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="card">
+    <h2>Emergency contact</h2>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="emergencyName" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Relation</mat-label>
+        <input matInput formControlName="emergencyRelation" maxlength="50" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Mob No.</mat-label>
+        <input matInput formControlName="emergencyMobNo" maxlength="20" autocomplete="off" />
+        @if (form.controls.emergencyMobNo.invalid) {
+          <mat-error>Enter a valid mobile number</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </mat-card>
+
+  @if (!editing) {
+    <mat-card appearance="outlined" class="card">
+      <h2>Documents</h2>
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>ID proof type</mat-label>
+          <mat-select formControlName="idProofType">
+            <mat-option value="">Not set</mat-option>
+            @for (t of idProofTypes; track t[0]) {
+              <mat-option [value]="t[0]">{{ t[1] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <app-document-picker
+          label="ID proof file"
+          (fileChosen)="choose('id-proof', $event)"
+          (view)="preview('id-proof')"
+          [removable]="true"
+          (fileRemoved)="unchoose('id-proof')"
+        />
+        <app-document-picker
+          label="Resume / CV"
+          accept=".pdf,.doc,.docx"
+          hint="PDF, DOC or DOCX, up to 2 MB"
+          (fileChosen)="choose('resume', $event)"
+          (view)="preview('resume')"
+          [removable]="true"
+          (fileRemoved)="unchoose('resume')"
+        />
+        <!-- Second line: additional documents, any number. -->
+        <div class="span-3">
+          <app-additional-documents (pendingChange)="extras.set($event)" />
+        </div>
+      </div>
+    </mat-card>
+  }
+
+  <mat-card appearance="outlined" class="card">
+    <h2>Bank details</h2>
+    <div class="grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Account holder name</mat-label>
+        <input matInput formControlName="bankAccountHolder" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Bank name</mat-label>
+        <input matInput formControlName="bankName" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Branch</mat-label>
+        <input matInput formControlName="bankBranch" maxlength="100" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Account number</mat-label>
+        <input matInput formControlName="bankAccountNumber" maxlength="34" autocomplete="off" />
+        @if (form.controls.bankAccountNumber.invalid) {
+          <mat-error>Letters and digits only (5 to 34)</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>IFSC</mat-label>
+        <input matInput formControlName="bankIfsc" maxlength="11" autocomplete="off" />
+        @if (form.controls.bankIfsc.invalid) {
+          <mat-error>IFSC looks like SBIN0001234</mat-error>
+        }
+      </mat-form-field>
+      @if (!editing) {
+        <div class="docs">
+          <app-document-picker
+            label="Passbook copy"
+            (fileChosen)="choose('passbook', $event)"
+            (view)="preview('passbook')"
+            [removable]="true"
+            (fileRemoved)="unchoose('passbook')"
+          />
+        </div>
+      }
+    </div>
+  </mat-card>
+</form>

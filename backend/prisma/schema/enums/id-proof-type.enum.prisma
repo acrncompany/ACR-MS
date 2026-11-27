@@ -1,0 +1,7 @@
+enum IdProofType {
+  AADHAAR
+  PAN
+  PASSPORT
+  VOTER_ID
+  DRIVING_LICENCE
+}

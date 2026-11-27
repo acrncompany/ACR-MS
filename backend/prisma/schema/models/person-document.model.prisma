@@ -1,0 +1,26 @@
+/// An additional document of an employee OR an article (one or more per person, e.g. a
+/// certificate). Exactly one of employeeId / articleId is set. Only the storage KEY is stored
+/// (never a URL). Never hard-deleted by the app.
+model PersonDocument {
+  id         String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  tenantId   String    @db.Uuid
+  employeeId String?   @db.Uuid
+  articleId  String?   @db.Uuid
+  title      String    @default("")
+  fileKey    String
+  fileName   String
+  fileMime   String
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  createdBy  String?   @db.Uuid
+  deletedAt  DateTime? @db.Timestamptz(3)
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  employee Employee? @relation("EmployeeDocuments", fields: [tenantId, employeeId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+  article  Article?  @relation("ArticleDocuments", fields: [tenantId, articleId], references: [tenantId, id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, employeeId])
+  @@index([tenantId, articleId])
+  @@map("person_documents")
+}

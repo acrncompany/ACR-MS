@@ -35,6 +35,8 @@ export const envSchema = z.object({
     .string()
     .regex(/^[A-Za-z0-9_-]{1,32}$/)
     .default('v1'),
+  /** Folder for uploaded files (employee documents). Back it up; never serve it directly. */
+  FILE_STORAGE_DIR: z.string().min(1).default('./storage'),
   /** Name of the httpOnly refresh-token cookie. */
   REFRESH_COOKIE_NAME: z
     .string()

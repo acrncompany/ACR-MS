@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ZodValidationPipe } from '../../../core/validation/zod-validation.pipe.js';
 import type { Actor } from '../../access/domain/actor.js';
 import { CurrentActor, RequirePermission } from '../../access/presentation/permissions.js';

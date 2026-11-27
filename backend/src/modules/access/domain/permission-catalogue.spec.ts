@@ -25,9 +25,9 @@ const read = (relative: string): string => readFileSync(join(FRONTEND_APP, relat
 
 /** Module keys of the frontend permission matrix, e.g. "clients". */
 function frontendModules(): string[] {
-  return [...read('features/admin/domain/permission-matrix.ts').matchAll(/\{ key: '([a-z]+)', label:/g)].map(
-    (m) => m[1],
-  );
+  return [
+    ...read('features/admin/domain/permission-matrix.ts').matchAll(/\{ key: '([a-z]+)', label:/g),
+  ].map((m) => m[1]);
 }
 
 /** Action names the frontend matrix can combine with a module. */

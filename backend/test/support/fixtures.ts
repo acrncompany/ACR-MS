@@ -245,6 +245,8 @@ export async function deleteFixtures(owner: pg.Pool, tenantIds: string[]): Promi
     await client.query(`DELETE FROM audit_logs WHERE "tenantId" = ANY($1)`, [tenantIds]);
     await client.query(`ALTER TABLE audit_logs ENABLE TRIGGER USER`);
     for (const table of [
+      'person_documents',
+      'articles',
       'employees',
       'designations',
       'departments',

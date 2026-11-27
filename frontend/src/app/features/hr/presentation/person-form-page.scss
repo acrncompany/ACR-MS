@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+// Square header buttons (Cancel / Save), like the client form.
+app-page-header .mat-mdc-button-base {
+  --mat-button-filled-container-shape: 0;
+  --mat-button-outlined-container-shape: 0;
+  border-radius: 0;
+}
+
+// Slightly smaller fields, all the same height so rows line up.
+.form {
+  --mat-form-field-container-height: 44px;
+  --mat-form-field-container-vertical-padding: 10px;
+  --mat-form-field-outlined-label-text-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  mat-form-field {
+    width: 100%;
+    font-size: 0.875rem;
+  }
+}
+
+.card {
+  padding: 1rem 1.25rem;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.problems {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 0.5rem;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.span-3 {
+  grid-column: 1 / -1;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+}
+
+.choice-label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.hint {
+  margin: 0 0 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: auto;
+  }
+}

@@ -43,12 +43,16 @@ export class DataPage {
   readonly searchPlaceholder = input('Search');
   /** Emits the row's data when a row is clicked (the page decides what to open). */
   readonly rowClick = output<unknown>();
+  /** Rows open something on click: pointer cursor and a small zoom on hover. */
+  readonly clickableRows = input(false);
 
   /**
    * Server mode: `rows` is the current page from the server, `total` the number of matches. The
    * search box (debounced) and the pager emit `queryChange`; the parent loads the data.
    */
   readonly serverSide = input(false);
+  /** Show "There are no records yet." when the list is empty and not searched. */
+  readonly showEmptyMessage = input(true);
   readonly total = input(0);
   readonly page = input(1);
   readonly pageSize = input(25);

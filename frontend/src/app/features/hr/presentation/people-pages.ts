@@ -1,24 +1,34 @@
-import { ChangeDetectionStrategy, Component, computed, inject, Injector } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  Injector,
+  isDevMode,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ColDef } from 'ag-grid-community';
 import { SessionService } from '../../../core/auth/session.service';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { toApiError } from '../../../core/http/api-error';
-import { dateColumn, statusColumn, textColumn } from '../../../shared/ag-grid';
+import { dateColumn, iconActionsColumn, statusColumn, textColumn } from '../../../shared/ag-grid';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { DataPage, SummaryItem } from '../../../shared/components/data-page/data-page';
 import {
   DepartmentEntry,
   DepartmentInput,
   DesignationEntry,
   DesignationInput,
-  EmployeeEntry,
-  EmployeeInput,
+  PERSON_LABELS,
+  PersonEntry,
+  PersonKind,
 } from '../domain/people-directory.models';
 import { PeopleDirectoryRepository } from '../domain/people-directory.repository';
 import { PagedList } from './paged-list';
-import { DepartmentDialog, DesignationDialog, EmployeeDialog } from './people-dialogs';
+import { DepartmentDialog, DesignationDialog } from './people-dialogs';
 
 const NEW_BUTTON_STYLES = `
   .new-item {
@@ -31,8 +41,9 @@ const NEW_BUTTON_STYLES = `
   }
 `;
 
+/** Employees or Articles (route data `kind`): the same list, columns and "new" page. */
 @Component({
-  selector: 'app-people-employees-page',
+  selector: 'app-people-person-list-page',
   imports: [DataPage, MatButtonModule],
   template: `
     <app-data-page
@@ -41,17 +52,20 @@ const NEW_BUTTON_STYLES = `
       [columns]="columns"
       [rows]="list.rows()"
       [serverSide]="true"
+      [showEmptyMessage]="false"
+      [clickableRows]="true"
       [total]="list.total()"
       [page]="list.page()"
       [pageSize]="list.pageSize()"
       [loading]="list.loading()"
       [errorMessage]="list.error()"
       (queryChange)="list.onQuery($event)"
+      (rowClick)="open($any($event))"
     >
       <ng-container actions>
         @if (canCreate) {
           <button mat-flat-button type="button" class="new-item" (click)="add()">
-            New employee
+            New {{ labels.singular }}
           </button>
         }
       </ng-container>
@@ -60,56 +74,105 @@ const NEW_BUTTON_STYLES = `
   styles: NEW_BUTTON_STYLES,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PeopleEmployeesPage {
+export class PeoplePersonListPage {
   private readonly repo = inject(PeopleDirectoryRepository);
-  private readonly dialog = inject(MatDialog);
-  // Dialogs get this injector so they can see the route-scoped repository.
-  private readonly injector = inject(Injector);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(AppConfigService).config.locale.locale;
-  protected readonly canCreate = inject(SessionService).can('hr.create');
-  protected readonly list = new PagedList<EmployeeEntry>((q) => this.repo.employees(q));
+  protected readonly kind: PersonKind = this.route.snapshot.data['kind'];
+  protected readonly labels = PERSON_LABELS[this.kind];
+  /** /hr/people (employees) or /hr/people/articles. */
+  private readonly base = this.kind === 'employee' ? '/hr/people/employees' : '/hr/people/articles';
+  private readonly session = inject(SessionService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+  protected readonly canCreate = this.session.can('hr.create');
+  protected readonly list = new PagedList<PersonEntry>((q) => this.repo.people(this.kind, q));
 
-  protected readonly columns: ColDef<EmployeeEntry>[] = [
-    { ...textColumn<EmployeeEntry>('code', 'Code'), sortable: false },
-    { ...textColumn<EmployeeEntry>('name', 'Name', 2), minWidth: 160, sortable: false },
-    { ...textColumn<EmployeeEntry>('email', 'Email', 2), minWidth: 180, sortable: false },
-    { ...textColumn<EmployeeEntry>('phone', 'Phone'), sortable: false },
+  protected readonly columns: ColDef<PersonEntry>[] = [
+    { ...textColumn<PersonEntry>('code', 'Code'), sortable: false },
+    { ...textColumn<PersonEntry>('name', 'Name', 2), minWidth: 160, sortable: false },
+    { ...textColumn<PersonEntry>('email', 'Email', 2), minWidth: 180, sortable: false },
+    { ...textColumn<PersonEntry>('mobNo', 'Mob No.'), sortable: false },
     {
-      ...textColumn<EmployeeEntry>('designationName', 'Designation', 2),
+      ...textColumn<PersonEntry>('designationName', 'Designation', 2),
       minWidth: 150,
       sortable: false,
       valueFormatter: (p) => p.value || '—',
     },
     {
-      ...textColumn<EmployeeEntry>('departmentName', 'Department', 2),
+      ...textColumn<PersonEntry>('departmentName', 'Department', 2),
       minWidth: 150,
       sortable: false,
       valueFormatter: (p) => p.value || '—',
     },
-    { ...dateColumn<EmployeeEntry>('joinDate', 'Joined', this.locale), sortable: false },
-    { ...statusColumn<EmployeeEntry>('status'), sortable: false },
+    {
+      ...textColumn<PersonEntry>('reportingManagerName', 'Reports to', 2),
+      minWidth: 150,
+      sortable: false,
+      valueFormatter: (p) => p.value || '—',
+    },
+    { ...dateColumn<PersonEntry>('joinDate', 'Joined', this.locale), sortable: false },
+    { ...statusColumn<PersonEntry>('status'), sortable: false },
+    ...(this.session.can('hr.edit')
+      ? [
+          iconActionsColumn<PersonEntry>([
+            { icon: 'edit', emoji: '✏️', title: 'Edit', run: (row) => this.edit(row) },
+            // DEVELOPMENT ONLY: a real delete. The server refuses it in production, so the
+            // button is not offered there either. Replace with a proper rule (deactivate) later.
+            {
+              icon: 'delete',
+              danger: true,
+              title: 'Delete',
+              run: (row) => this.confirmDelete(row),
+              visible: () => isDevMode(),
+            },
+          ]),
+        ]
+      : []),
   ];
 
   protected readonly summary = computed<SummaryItem[]>(() => [
-    { label: 'Employees', value: String(this.list.total()), icon: 'groups' },
+    {
+      label: this.labels.plural,
+      value: String(this.list.total()),
+      icon: this.kind === 'employee' ? 'groups' : 'school',
+    },
   ]);
 
-  protected add(): void {
+  private edit(row: PersonEntry): void {
+    void this.router.navigate([this.base, row.id, 'edit']);
+  }
+
+  private confirmDelete(row: PersonEntry): void {
     this.dialog
-      .open(EmployeeDialog, { injector: this.injector })
+      .open(ConfirmDialog, {
+        data: {
+          title: `Delete ${row.name}?`,
+          message: `Development only: ${row.code} is removed from the database for good, with its documents. The code is not reused.`,
+          confirmLabel: 'Delete',
+        },
+      })
       .afterClosed()
-      .subscribe((input?: EmployeeInput) => {
-        if (!input) return;
-        this.repo.createEmployee(input).subscribe({
-          next: (created) => {
-            this.snackBar.open(`Saved as ${created.code}`, 'OK', { duration: 3000 });
-            this.list.reload();
-          },
-          error: (e: unknown) =>
-            this.snackBar.open(toApiError(e).message, 'OK', { duration: 8000 }),
-        });
-      });
+      .subscribe((ok?: boolean) => ok && this.delete(row));
+  }
+
+  private delete(row: PersonEntry): void {
+    this.repo.deletePerson(this.kind, row.id).subscribe({
+      next: () => {
+        this.snackBar.open('Deleted', 'OK', { duration: 2500 });
+        this.list.reload();
+      },
+      error: (e: unknown) => this.snackBar.open(toApiError(e).message, 'OK', { duration: 6000 }),
+    });
+  }
+
+  protected add(): void {
+    void this.router.navigate([this.base, 'new']);
+  }
+
+  protected open(row: PersonEntry): void {
+    void this.router.navigate([this.base, row.id]);
   }
 }
 
@@ -123,6 +186,7 @@ export class PeopleEmployeesPage {
       [columns]="columns"
       [rows]="list.rows()"
       [serverSide]="true"
+      [showEmptyMessage]="false"
       [total]="list.total()"
       [page]="list.page()"
       [pageSize]="list.pageSize()"
@@ -195,6 +259,7 @@ export class PeopleDesignationsPage {
       [columns]="columns"
       [rows]="list.rows()"
       [serverSide]="true"
+      [showEmptyMessage]="false"
       [total]="list.total()"
       [page]="list.page()"
       [pageSize]="list.pageSize()"
